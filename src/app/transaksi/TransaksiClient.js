@@ -15,6 +15,7 @@ export default function TransaksiClient({
   canInput,
   categories,
   initialTransactions,
+  members,
   memberName,
 }) {
   const supabase = createClient();
@@ -22,6 +23,7 @@ export default function TransaksiClient({
   const [type, setType] = useState("in");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [categoryId, setCategoryId] = useState("");
+  const [memberId, setMemberId] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [transactions, setTransactions] = useState(initialTransactions);
@@ -54,13 +56,14 @@ export default function TransaksiClient({
       .insert({
         type,
         category_id: categoryId,
+        member_id: memberId || null,
         amount: Number(amount),
         date,
         description: description || null,
         created_by: user.id,
       })
       .select(
-        "id, type, amount, date, description, created_at, categories(name)"
+        "id, type, amount, date, description, created_at, categories(name), members(name)"
       )
       .single();
 
@@ -78,6 +81,7 @@ export default function TransaksiClient({
     setAmount("");
     setDescription("");
     setCategoryId("");
+    setMemberId("");
   }
 
   const visibleTransactions = transactions.filter((t) => {
@@ -163,6 +167,27 @@ export default function TransaksiClient({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Anggota <span className="text-gray-400">(opsional)</span>
+            </label>
+            <select
+              value={memberId}
+              onChange={(e) => setMemberId(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
+            >
+              <option value="">— Tidak spesifik —</option>
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">
+              Isi kalau ini pembayaran dari anggota tertentu (mis. Iuran).
+            </p>
           </div>
 
           <div>
@@ -259,6 +284,11 @@ export default function TransaksiClient({
                 })}
                 {t.description ? ` · ${t.description}` : ""}
               </p>
+              {t.members?.name && (
+                <p className="text-xs text-blue-600 font-medium">
+                  Anggota: {t.members.name}
+                </p>
+              )}
               {t.profiles?.members?.name && (
                 <p className="text-xs text-gray-400">
                   oleh {t.profiles.members.name}

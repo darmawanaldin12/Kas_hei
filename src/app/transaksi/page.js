@@ -28,17 +28,24 @@ export default async function TransaksiPage() {
   const { data: transactions } = await supabase
     .from("transactions")
     .select(
-      "id, type, amount, date, description, created_at, categories(name), profiles(members(name))"
+      "id, type, amount, date, description, created_at, categories(name), profiles(members(name)), members(name)"
     )
     .order("date", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(50);
+
+  const { data: activeMembers } = await supabase
+    .from("members")
+    .select("id, name")
+    .eq("status", "aktif")
+    .order("name");
 
   return (
     <TransaksiClient
       canInput={canInput}
       categories={categories ?? []}
       initialTransactions={transactions ?? []}
+      members={activeMembers ?? []}
       memberName={profile?.members?.name ?? user.email}
     />
   );
