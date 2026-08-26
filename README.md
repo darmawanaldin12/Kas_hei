@@ -17,13 +17,13 @@ Lihat `PRD-KasKantor.md` untuk detail requirement lengkap.
 ## Struktur
 - `src/app/` — routes (App Router)
 - `src/lib/supabase/` — client & server Supabase helper
-- `middleware.js` — proteksi auth per route
+- `src/middleware.js` — proteksi auth per route
 
 ## Status
 Fase 1 (MVP) sedang dikerjakan sesuai roadmap di PRD:
 - [x] Scaffold project
-- [ ] Auth & role setup
-- [ ] Manajemen anggota
+- [x] Auth & role setup (login pakai Nama + Nomor ID Card)
+- [x] Manajemen anggota
 - [ ] Input transaksi
 - [ ] Dashboard saldo
 - [ ] Tracking iuran (manual-check)
