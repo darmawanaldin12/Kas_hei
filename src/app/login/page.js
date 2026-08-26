@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { employeeIdToEmail } from "@/lib/auth/employeeId";
 
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
+  const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -19,14 +20,14 @@ export default function LoginPage() {
     setLoading(true);
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: employeeIdToEmail(employeeId),
+      password: pin,
     });
 
     setLoading(false);
 
     if (signInError) {
-      setError("Email atau password salah. Silakan coba lagi.");
+      setError("Nomor ID Card atau PIN salah. Silakan coba lagi.");
       return;
     }
 
@@ -39,40 +40,43 @@ export default function LoginPage() {
       <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h1 className="text-xl font-semibold mb-1">KasKu</h1>
         <p className="text-sm text-gray-500 mb-6">
-          Masuk untuk mengelola kas kantor.
+          Masuk pakai Nomor ID Card kantor kamu.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="email">
-              Email
+            <label
+              className="block text-sm font-medium mb-1"
+              htmlFor="employeeId"
+            >
+              Nomor ID Card
             </label>
             <input
-              id="email"
-              type="email"
+              id="employeeId"
+              type="text"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
-              placeholder="nama@email.com"
+              placeholder="Contoh: EMP001"
             />
           </div>
 
           <div>
-            <label
-              className="block text-sm font-medium mb-1"
-              htmlFor="password"
-            >
-              Password
+            <label className="block text-sm font-medium mb-1" htmlFor="pin">
+              PIN
             </label>
             <input
-              id="password"
+              id="pin"
               type="password"
               required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              inputMode="numeric"
+              autoComplete="current-password"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
-              placeholder="••••••••"
+              placeholder="••••••"
             />
           </div>
 

@@ -20,11 +20,13 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, member_id, members(name, employee_id)")
     .eq("id", user.id)
     .single();
 
   const role = profile?.role ?? "anggota";
+  const displayName = profile?.members?.name ?? user.email;
+  const employeeId = profile?.members?.employee_id;
 
   return (
     <main className="p-6 max-w-2xl mx-auto">
@@ -32,7 +34,8 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-xl font-semibold">Dashboard Saldo Kas</h1>
           <p className="text-sm text-gray-500">
-            {user.email} · {roleLabel[role] ?? role}
+            {displayName}
+            {employeeId ? ` (${employeeId})` : ""} · {roleLabel[role] ?? role}
           </p>
         </div>
         <form action="/auth/signout" method="post">
