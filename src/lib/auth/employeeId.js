@@ -3,5 +3,8 @@
 // jadi "email internal" yang konsisten & tidak pernah terlihat user.
 export function employeeIdToEmail(employeeId) {
   const normalized = employeeId.trim().toLowerCase().replace(/\s+/g, "");
-  return `${normalized}@kaskantor.internal`;
+  // ".internal" ditolak Supabase Auth (dianggap reserved TLD / invalid).
+  // Pakai TLD asli (.app) supaya lolos validasi meski email ini tidak
+  // pernah benar-benar dipakai untuk kirim/terima pesan.
+  return `${normalized}@kaskantor.app`;
 }
