@@ -71,12 +71,18 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 flex-wrap">
         <a
           href="/transaksi"
           className="text-sm rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
         >
           Transaksi Kas →
+        </a>
+        <a
+          href="/iuran"
+          className="text-sm rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
+        >
+          Iuran Bulanan →
         </a>
         {role !== "anggota" && (
           <a
