@@ -48,6 +48,17 @@ export default async function DashboardPage() {
         </form>
       </div>
 
+      {role !== "anggota" && (
+        <div className="mb-6">
+          <a
+            href="/anggota"
+            className="inline-block text-sm rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
+          >
+            Kelola Anggota →
+          </a>
+        </div>
+      )}
+
       <div className="rounded-xl border border-gray-200 p-6 bg-white">
         <p className="text-sm text-gray-500 mb-1">Saldo Kas Saat Ini</p>
         <p className="text-3xl font-semibold">Rp 0</p>
