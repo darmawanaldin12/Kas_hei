@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { employeeIdToEmail } from "@/lib/auth/employeeId";
+import { nameToEmail } from "@/lib/auth/employeeId";
 
 export default function RegisterPage() {
   const supabase = createClient();
 
   const [name, setName] = useState("");
   const [employeeId, setEmployeeId] = useState("");
-  const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,8 +19,8 @@ export default function RegisterPage() {
     setLoading(true);
 
     const { error: signUpError } = await supabase.auth.signUp({
-      email: employeeIdToEmail(employeeId),
-      password: pin,
+      email: nameToEmail(name),
+      password: employeeId.trim(),
       options: {
         data: {
           employee_id: employeeId.trim(),
@@ -53,13 +52,12 @@ export default function RegisterPage() {
         {success ? (
           <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-3">
             Akun berhasil dibuat. Kalau konfirmasi email diaktifkan di
-            Supabase, minta admin nonaktifkan dulu untuk akun berbasis ID
-            Card ini. Lalu{" "}
+            Supabase, minta admin nonaktifkan dulu. Lalu{" "}
             <a href="/login" className="underline font-medium">
               login di sini
             </a>{" "}
-            pakai Nomor ID Card &amp; PIN. Role default akun baru adalah{" "}
-            <b>anggota</b> — untuk akun pertama, naikkan role jadi{" "}
+            pakai Nama Lengkap &amp; Nomor ID Card. Role default akun baru
+            adalah <b>anggota</b> — untuk akun pertama, naikkan role jadi{" "}
             <b>admin</b> lewat Supabase dashboard.
           </p>
         ) : (
@@ -75,7 +73,7 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
-                placeholder="Nama sesuai ID Card"
+                placeholder="Contoh: Aldin Darmawan"
               />
             </div>
 
@@ -90,28 +88,15 @@ export default function RegisterPage() {
                 id="employeeId"
                 type="text"
                 required
+                minLength={6}
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
-                placeholder="Contoh: EMP001"
+                placeholder="Contoh: 6500007 (minimal 6 digit)"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="pin">
-                PIN
-              </label>
-              <input
-                id="pin"
-                type="password"
-                required
-                minLength={6}
-                inputMode="numeric"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
-                placeholder="Minimal 6 digit"
-              />
+              <p className="text-xs text-gray-400 mt-1">
+                Nomor ID Card ini juga jadi password login kamu.
+              </p>
             </div>
 
             {error && (

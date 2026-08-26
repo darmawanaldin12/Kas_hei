@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { employeeIdToEmail } from "@/lib/auth/employeeId";
+import { nameToEmail } from "@/lib/auth/employeeId";
 
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  const [name, setName] = useState("");
   const [employeeId, setEmployeeId] = useState("");
-  const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,14 +20,14 @@ export default function LoginPage() {
     setLoading(true);
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: employeeIdToEmail(employeeId),
-      password: pin,
+      email: nameToEmail(name),
+      password: employeeId,
     });
 
     setLoading(false);
 
     if (signInError) {
-      setError("Nomor ID Card atau PIN salah. Silakan coba lagi.");
+      setError("Nama atau Nomor ID Card salah. Silakan coba lagi.");
       return;
     }
 
@@ -40,10 +40,26 @@ export default function LoginPage() {
       <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h1 className="text-xl font-semibold mb-1">KasKu</h1>
         <p className="text-sm text-gray-500 mb-6">
-          Masuk pakai Nomor ID Card kantor kamu.
+          Masuk pakai Nama Lengkap &amp; Nomor ID Card.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="name">
+              Nama Lengkap
+            </label>
+            <input
+              id="name"
+              type="text"
+              required
+              autoComplete="username"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
+              placeholder="Contoh: Aldin Darmawan"
+            />
+          </div>
+
           <div>
             <label
               className="block text-sm font-medium mb-1"
@@ -53,30 +69,14 @@ export default function LoginPage() {
             </label>
             <input
               id="employeeId"
-              type="text"
-              required
-              autoComplete="username"
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
-              placeholder="Contoh: EMP001"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="pin">
-              PIN
-            </label>
-            <input
-              id="pin"
               type="password"
               required
               inputMode="numeric"
               autoComplete="current-password"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
-              placeholder="••••••"
+              placeholder="Nomor ID Card kamu"
             />
           </div>
 
