@@ -2,11 +2,21 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
+import KlaimIuranCard from "./KlaimIuranCard";
 
 const MONTH_NAMES = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
   "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ];
+
+const STATUS_BADGE = {
+  lunas: { label: "Lunas", className: "bg-green-100 text-green-700" },
+  pending_verifikasi: {
+    label: "Menunggu Verifikasi",
+    className: "bg-amber-100 text-amber-700",
+  },
+  belum: { label: "Belum", className: "bg-gray-100 text-gray-500" },
+};
 
 function formatRupiah(n) {
   return new Intl.NumberFormat("id-ID", {
@@ -79,7 +89,7 @@ export default async function IuranPage({ searchParams }) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, member_id")
     .eq("id", user.id)
     .single();
 
@@ -88,7 +98,7 @@ export default async function IuranPage({ searchParams }) {
 
   const { data: period } = await supabase
     .from("dues_periods")
-    .select("id, amount_default")
+    .select("id, amount_default, month, year")
     .eq("month", month)
     .eq("year", year)
     .maybeSingle();
@@ -103,7 +113,9 @@ export default async function IuranPage({ searchParams }) {
   if (period) {
     const { data } = await supabase
       .from("dues_payments")
-      .select("id, member_id, status, paid_at, amount")
+      .select(
+        "id, member_id, status, paid_at, amount, claimed_amount, claimed_date, proof_url, rejection_reason"
+      )
       .eq("period_id", period.id);
     payments = data ?? [];
   }
@@ -112,6 +124,13 @@ export default async function IuranPage({ searchParams }) {
   const lunasCount = (activeMembers ?? []).filter(
     (m) => paymentByMember.get(m.id)?.status === "lunas"
   ).length;
+  const pendingCount = (activeMembers ?? []).filter(
+    (m) => paymentByMember.get(m.id)?.status === "pending_verifikasi"
+  ).length;
+
+  const ownPayment = profile?.member_id
+    ? paymentByMember.get(profile.member_id) ?? null
+    : null;
 
   let prevMonth = month - 1;
   let prevYear = year;
@@ -156,6 +175,10 @@ export default async function IuranPage({ searchParams }) {
         </Link>
       </div>
 
+      {!canManage && period && (
+        <KlaimIuranCard payment={ownPayment} period={period} userId={user.id} />
+      )}
+
       {!period ? (
         <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
           <p className="text-sm text-gray-500 mb-4">
@@ -180,20 +203,37 @@ export default async function IuranPage({ searchParams }) {
         </div>
       ) : (
         <>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 mb-4">
-            <p className="text-sm text-gray-500">
-              {lunasCount} dari {activeMembers?.length ?? 0} anggota sudah
-              bayar
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              Nominal: {formatRupiah(period.amount_default)}/anggota
-            </p>
-          </div>
+          {canManage && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">
+                    {lunasCount} dari {activeMembers?.length ?? 0} anggota
+                    sudah bayar
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Nominal: {formatRupiah(period.amount_default)}/anggota
+                  </p>
+                </div>
+                {pendingCount > 0 && (
+                  <a
+                    href="/iuran/verifikasi"
+                    className="text-xs rounded-lg bg-amber-100 text-amber-700 font-medium px-3 py-1.5"
+                  >
+                    {pendingCount} menunggu verifikasi →
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="rounded-xl border border-gray-200 bg-white divide-y">
             {(activeMembers ?? []).map((m) => {
               const payment = paymentByMember.get(m.id);
-              const isPaid = payment?.status === "lunas";
+              const status = payment?.status ?? "belum";
+              const badge = STATUS_BADGE[status];
+              const isPaid = status === "lunas";
+              const isPending = status === "pending_verifikasi";
               return (
                 <div
                   key={m.id}
@@ -213,15 +253,11 @@ export default async function IuranPage({ searchParams }) {
                   </div>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        isPaid
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
+                      className={`text-xs px-2 py-1 rounded-full ${badge.className}`}
                     >
-                      {isPaid ? "Lunas" : "Belum"}
+                      {badge.label}
                     </span>
-                    {canManage && (
+                    {canManage && !isPending && (
                       <form action={togglePayment}>
                         <input type="hidden" name="memberId" value={m.id} />
                         <input
@@ -251,6 +287,14 @@ export default async function IuranPage({ searchParams }) {
                           {isPaid ? "Batalkan" : "Tandai Lunas"}
                         </button>
                       </form>
+                    )}
+                    {canManage && isPending && (
+                      <a
+                        href="/iuran/verifikasi"
+                        className="text-xs rounded-lg border border-amber-300 text-amber-700 px-2.5 py-1.5 hover:bg-amber-50"
+                      >
+                        Verifikasi
+                      </a>
                     )}
                   </div>
                 </div>
