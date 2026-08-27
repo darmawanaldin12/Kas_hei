@@ -33,6 +33,7 @@ export default async function DashboardPage() {
     .single();
 
   const role = profile?.role ?? "anggota";
+  const canManage = role === "admin" || role === "pengurus";
   const displayName = profile?.members?.name ?? user.email;
   const employeeId = profile?.members?.employee_id;
 
@@ -50,6 +51,42 @@ export default async function DashboardPage() {
   const totalKeluar = (allTx ?? [])
     .filter((t) => t.type === "out")
     .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  // 4.9: ringkasan status iuran bulan berjalan (lunas / pending verifikasi / belum)
+  let duesSummary = null;
+  if (canManage) {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    const { data: period } = await supabase
+      .from("dues_periods")
+      .select("id")
+      .eq("month", month)
+      .eq("year", year)
+      .maybeSingle();
+
+    if (period) {
+      const { data: activeMembers } = await supabase
+        .from("members")
+        .select("id")
+        .eq("status", "aktif");
+
+      const { data: payments } = await supabase
+        .from("dues_payments")
+        .select("member_id, status")
+        .eq("period_id", period.id);
+
+      const total = activeMembers?.length ?? 0;
+      const lunas = (payments ?? []).filter((p) => p.status === "lunas").length;
+      const pending = (payments ?? []).filter(
+        (p) => p.status === "pending_verifikasi"
+      ).length;
+      const belum = total - lunas - pending;
+
+      duesSummary = { total, lunas, pending, belum };
+    }
+  }
 
   return (
     <main className="p-6 max-w-2xl mx-auto">
@@ -107,7 +144,7 @@ export default async function DashboardPage() {
         <p className="text-3xl font-semibold">{formatRupiah(saldo)}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="rounded-xl border border-gray-200 p-4 bg-white">
           <p className="text-xs text-gray-500 mb-1">Total Pemasukan</p>
           <p className="text-lg font-semibold text-green-600">
@@ -122,9 +159,35 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {duesSummary && (
+        <div className="rounded-xl border border-gray-200 p-4 bg-white mb-4">
+          <p className="text-xs text-gray-500 mb-2">
+            Status Iuran Bulan Ini ({duesSummary.total} anggota aktif)
+          </p>
+          <div className="flex gap-2">
+            <span className="flex-1 text-center rounded-lg bg-green-50 text-green-700 text-sm font-medium py-2">
+              {duesSummary.lunas} Lunas
+            </span>
+            <span className="flex-1 text-center rounded-lg bg-amber-50 text-amber-700 text-sm font-medium py-2">
+              {duesSummary.pending} Pending
+            </span>
+            <span className="flex-1 text-center rounded-lg bg-gray-50 text-gray-500 text-sm font-medium py-2">
+              {duesSummary.belum} Belum
+            </span>
+          </div>
+          {duesSummary.pending > 0 && (
+            <a
+              href="/iuran/verifikasi"
+              className="block text-center text-xs text-amber-700 mt-2 underline"
+            >
+              Verifikasi klaim yang menunggu →
+            </a>
+          )}
+        </div>
+      )}
+
       <p className="text-xs text-gray-400 mt-4">
-        Grafik bulanan & ringkasan iuran akan ditambahkan pada tahap
-        berikutnya.
+        Grafik bulanan akan ditambahkan pada tahap berikutnya.
       </p>
     </main>
   );
