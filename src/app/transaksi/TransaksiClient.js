@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 function formatRupiah(n) {
@@ -29,12 +29,60 @@ export default function TransaksiClient({
   const [transactions, setTransactions] = useState(initialTransactions);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [duplicateWarning, setDuplicateWarning] = useState("");
 
   const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 
   const filteredCategories = categories.filter((c) => c.type === type);
   const uniqueCategoryNames = [...new Set(categories.map((c) => c.name))];
+
+  // 4.8: cek klaim iuran pending untuk anggota yang sama & periode yang sama,
+  // supaya bendahara tidak input manual dobel untuk transaksi yang sudah diklaim anggota.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkDuplicateClaim() {
+      setDuplicateWarning("");
+
+      const selectedCategory = categories.find((c) => c.id === categoryId);
+      if (type !== "in" || !memberId || selectedCategory?.name !== "Iuran") {
+        return;
+      }
+
+      const d = new Date(date);
+      const month = d.getMonth() + 1;
+      const year = d.getFullYear();
+
+      const { data: period } = await supabase
+        .from("dues_periods")
+        .select("id")
+        .eq("month", month)
+        .eq("year", year)
+        .maybeSingle();
+
+      if (!period || cancelled) return;
+
+      const { data: pending } = await supabase
+        .from("dues_payments")
+        .select("id")
+        .eq("member_id", memberId)
+        .eq("period_id", period.id)
+        .eq("status", "pending_verifikasi")
+        .maybeSingle();
+
+      if (pending && !cancelled) {
+        setDuplicateWarning(
+          "Anggota ini sudah punya klaim iuran yang menunggu verifikasi untuk periode ini. Cek halaman Verifikasi Iuran dulu sebelum input manual, supaya tidak tercatat dobel."
+        );
+      }
+    }
+
+    checkDuplicateClaim();
+    return () => {
+      cancelled = true;
+    };
+  }, [memberId, categoryId, date, type, categories, supabase]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -82,6 +130,7 @@ export default function TransaksiClient({
     setDescription("");
     setCategoryId("");
     setMemberId("");
+    setDuplicateWarning("");
   }
 
   const visibleTransactions = transactions.filter((t) => {
@@ -213,6 +262,12 @@ export default function TransaksiClient({
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/80"
             />
           </div>
+
+          {duplicateWarning && (
+            <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+              ⚠️ {duplicateWarning}
+            </p>
+          )}
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
