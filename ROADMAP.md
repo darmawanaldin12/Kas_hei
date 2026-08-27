@@ -16,11 +16,9 @@ Legenda: ✅ Selesai · 🟡 Sebagian/tabel ada tapi logic belum · ⬜ Belum di
 | 1.4 | Input transaksi (toggle in/out, kategori, riwayat + filter) | ✅ | `src/app/transaksi/TransaksiClient.js` |
 | 1.5 | Dashboard saldo real-time | ✅ | `src/app/dashboard/page.js` |
 | 1.6 | Tracking iuran manual-check per anggota per periode | ✅ | `src/app/iuran/page.js` |
-| 1.7 | Audit log dasar | 🟡 | Tabel `audit_logs` sudah ada di DB (RLS aktif) tapi **0 rows** — belum ada trigger/write logic yang aktif menulis ke tabel ini |
+| 1.7 | Audit log dasar | ✅ | Trigger `fn_audit_log()` di `transactions` & `dues_payments`, halaman `/audit-log` (admin only) |
 
-**Sisa kerja Fase 1:**
-- [ ] Buat trigger/fungsi Postgres (atau logic di API route) yang menulis ke `audit_logs` setiap create/update/delete di tabel `transactions` dan `dues_payments`
-- [ ] Halaman admin untuk browse/filter audit log (siapa, apa, kapan, before/after)
+Fase 1 **selesai 100%**.
 
 ---
 
@@ -28,7 +26,7 @@ Legenda: ✅ Selesai · 🟡 Sebagian/tabel ada tapi logic belum · ⬜ Belum di
 
 | # | Item | Status | Detail |
 |---|---|---|---|
-| 2.1 | Generate tagihan iuran otomatis tiap bulan | ✅ | `api/cron/generate-iuran`, Vercel Cron tanggal 25 tiap bulan — **sudah lebih maju dari urutan roadmap awal** |
+| 2.1 | Generate tagihan iuran otomatis tiap bulan | ✅ | `api/cron/generate-iuran`, Vercel Cron tanggal 25 tiap bulan |
 | 2.2 | Tutup buku bulanan | ⬜ | Tabel `monthly_closings` sudah ada (0 rows), belum ada halaman/logic |
 | 2.3 | Export laporan PDF | ⬜ | Belum ada folder `laporan`/`export` |
 | 2.4 | Export CSV/Excel | ⬜ | Belum ada |
@@ -40,7 +38,7 @@ Legenda: ✅ Selesai · 🟡 Sebagian/tabel ada tapi logic belum · ⬜ Belum di
   - [ ] API route: hitung saldo akhir bulan dari `transactions`, snapshot ke `monthly_closings`, set `is_locked = true`
   - [ ] Guard di API transaksi: tolak create/update/delete jika `date` transaksi berada di bulan yang `is_locked`
   - [ ] Halaman admin "Tutup Buku" + tombol buka kunci ulang (khusus admin)
-  - [ ] **Checklist rekonsiliasi sebelum tutup buku** (PRD §4.8 & §4.12): tampilkan daftar anggota `belum_bayar`/`pending_verifikasi` sebelum admin bisa konfirmasi tutup buku
+  - [ ] **Checklist rekonsiliasi sebelum tutup buku** (PRD §4.8 & §4.12): tampilkan daftar anggota `belum`/`pending_verifikasi` sebelum admin bisa konfirmasi tutup buku — sekarang datanya sudah tersedia lewat kerja Fase 4
 - **2.3 Export PDF**
   - [ ] Endpoint/halaman print-friendly laporan bulanan (rekap pemasukan, pengeluaran, saldo akhir)
   - [ ] Styling khusus print (`@media print`) atau generate PDF server-side
@@ -65,10 +63,11 @@ Legenda: ✅ Selesai · 🟡 Sebagian/tabel ada tapi logic belum · ⬜ Belum di
 **Detail teknis per item:**
 - **3.1 Reminder Email**
   - [ ] Setup Resend (atau SMTP) API key di env
-  - [ ] `api/cron/reminder-iuran` — jalan tanggal 20, query anggota `belum_bayar` periode berjalan, kirim email
-  - [ ] Template email singkat: nominal, cara bayar, link langsung ke form klaim (PRD §4.12)
+  - [ ] `api/cron/reminder-iuran` — jalan tanggal 20, query anggota `belum` periode berjalan, kirim email
+  - [ ] Template email singkat: nominal, cara bayar, link langsung ke form klaim (sudah tersedia di `/iuran`, lihat Fase 4)
+  - [ ] **Notifikasi konfirmasi verifikasi** (PRD §4.9): kirim email begitu klaim anggota dikonfirmasi/ditolak — belum diimplementasikan, menunggu setup Resend
 - **3.2 Upload Bukti Struk**
-  - [ ] Bucket Supabase Storage untuk struk pengeluaran (terpisah dari bucket bukti klaim iuran §4.12)
+  - [ ] Bucket Supabase Storage untuk struk pengeluaran (terpisah dari bucket `bukti-iuran` yang sudah dibuat di Fase 4)
   - [ ] Field upload opsional di form transaksi pengeluaran
 - **3.3 PWA**
   - [ ] `public/manifest.json` + icon set
@@ -80,59 +79,42 @@ Legenda: ✅ Selesai · 🟡 Sebagian/tabel ada tapi logic belum · ⬜ Belum di
 
 ---
 
-## Fase 4 — Klaim & Verifikasi Pembayaran Iuran (BARU, PRD §4.12)
+## Fase 4 — Klaim & Verifikasi Pembayaran Iuran (PRD §4.12)
 
-Prioritas tinggi — menutup celah nyata yang sudah terjadi (anggota bayar, tidak tercatat).
+Menutup celah nyata yang sudah terjadi (anggota bayar, tidak tercatat).
 
-| # | Item | Status |
-|---|---|---|
-| 4.1 | Migrasi tabel `dues_payments` — tambah kolom klaim | ⬜ |
-| 4.2 | Halaman anggota: tombol "Saya sudah bayar" + form klaim | ⬜ |
-| 4.3 | Storage bucket bukti klaim (wajib upload) | ⬜ |
-| 4.4 | Halaman bendahara: daftar klaim pending + verifikasi | ⬜ |
-| 4.5 | Aksi Konfirmasi → auto-create entri `transactions` | ⬜ |
-| 4.6 | Aksi Tolak → kembali `belum_bayar` + alasan | ⬜ |
-| 4.7 | Notifikasi ke anggota (klaim diverifikasi/ditolak) | ⬜ |
-| 4.8 | Warning duplikat saat input manual bendahara | ⬜ |
-| 4.9 | Update dashboard: hitung status `pending_verifikasi` | ⬜ |
-| 4.10 | Audit log untuk aksi klaim/verifikasi/tolak | ⬜ |
+| # | Item | Status | Detail |
+|---|---|---|---|
+| 4.1 | Migrasi tabel `dues_payments` — tambah kolom klaim | ✅ | Enum `pending_verifikasi` + kolom `claimed_at/amount/date`, `proof_url`, `verified_by/at`, `rejection_reason` |
+| 4.2 | Halaman anggota: tombol "Saya sudah bayar" + form klaim | ✅ | `src/app/iuran/KlaimIuranCard.js` — upload bukti wajib, terintegrasi di `/iuran` |
+| 4.3 | Storage bucket bukti klaim (wajib upload) | ✅ | Bucket privat `bukti-iuran`, RLS: anggota hanya upload ke folder sendiri, admin/pengurus bisa baca semua |
+| 4.4 | Halaman bendahara: daftar klaim pending + verifikasi | ✅ | `src/app/iuran/verifikasi/page.js` + `VerifikasiClient.js` |
+| 4.5 | Aksi Konfirmasi → auto-create entri `transactions` | ✅ | RPC `verify_dues_payment()` — sudah dites end-to-end |
+| 4.6 | Aksi Tolak → kembali `belum` + alasan | ✅ | RPC `reject_dues_payment()` — sudah dites end-to-end |
+| 4.7 | Notifikasi ke anggota (klaim diverifikasi/ditolak) | ⬜ | **Ditunda** — butuh setup Resend/email API dulu (Fase 3.1). Anggota untuk saat ini melihat status lewat halaman `/iuran` |
+| 4.8 | Warning duplikat saat input manual bendahara | ✅ | `TransaksiClient.js` — cek klaim pending sebelum submit transaksi manual kategori Iuran |
+| 4.9 | Update dashboard: hitung status `pending_verifikasi` | ✅ | Kartu ringkasan Lunas/Pending/Belum di `/dashboard` (admin & pengurus) |
+| 4.10 | Audit log untuk aksi klaim/verifikasi/tolak | ✅ | Otomatis tercatat lewat trigger `fn_audit_log()` yang sudah dipasang di Fase 1.7 — `actor_id` terisi benar meski RPC berjalan sebagai `SECURITY DEFINER` |
 
-**Detail teknis:**
-- **4.1 Migrasi DB**
-  - [ ] `ALTER TABLE dues_payments`: tambah `claimed_at`, `claimed_amount`, `claimed_date`, `proof_url`, `verified_by`, `verified_at`, `rejection_reason`
-  - [ ] Update `status` enum: `belum_bayar` / `pending_verifikasi` / `lunas`
-  - [ ] RLS: anggota hanya bisa update baris `dues_payments` miliknya sendiri (`member_id` match), dan hanya kolom klaim — tidak bisa langsung set `status = lunas`
-- **4.2 Form Klaim (sisi anggota)**
-  - [ ] Halaman iuran pribadi anggota: tombol "Saya sudah bayar" muncul di periode `belum_bayar`
-  - [ ] Form wajib: tanggal bayar, nominal, upload bukti (foto/screenshot transfer)
-  - [ ] Submit → `status = pending_verifikasi`
-- **4.3 Storage**
-  - [ ] Bucket baru `bukti-iuran` (terpisah dari bucket struk pengeluaran)
-  - [ ] Policy: anggota hanya bisa upload ke folder miliknya sendiri
-- **4.4 Halaman Verifikasi (sisi bendahara)**
-  - [ ] List klaim `pending_verifikasi`: nama anggota, nominal & tanggal klaim, foto bukti, kolom catatan verifikasi
-  - [ ] Sort/filter by periode
-- **4.5–4.6 Aksi Konfirmasi/Tolak**
-  - [ ] Konfirmasi: `status → lunas`, `verified_by`, `verified_at` terisi, otomatis insert ke `transactions` (kategori Iuran, `member_id` terkait)
-  - [ ] Tolak: `status → belum_bayar`, simpan `rejection_reason`, kolom klaim di-reset supaya anggota bisa klaim ulang
-- **4.7 Notifikasi**
-  - [ ] Email (dan WA jika tersedia) ke anggota begitu status berubah lunas/ditolak
-- **4.8 Warning Duplikat**
-  - [ ] Saat bendahara input transaksi manual kategori "Iuran" untuk anggota tertentu, cek dulu apakah ada `dues_payments` dengan status `pending_verifikasi` di periode yang sama → tampilkan warning sebelum submit
-- **4.9 Dashboard**
-  - [ ] Ringkasan iuran: "X lunas, Y pending verifikasi, Z belum bayar dari 25 anggota"
-- **4.10 Audit Log**
-  - [ ] Catat setiap transisi status di `dues_payments` (siapa klaim, siapa verifikasi/tolak, kapan) ke `audit_logs`
+**Fase 4 selesai 9 dari 10 item.** Sisa: 4.7 notifikasi email, menunggu Resend disiapkan di Fase 3.1.
+
+**Catatan implementasi & pengujian:**
+- Semua RPC (`claim_dues_payment`, `verify_dues_payment`, `reject_dues_payment`) memakai `SECURITY DEFINER` dengan validasi kepemilikan/role internal, sehingga anggota tidak butuh akses UPDATE langsung ke `dues_payments`.
+- Diuji langsung di database (dalam transaksi yang di-rollback, tidak mengubah data asli):
+  - Klaim → Verifikasi → status `lunas` + entri `transactions` otomatis terbuat ✅
+  - Klaim → Tolak → status kembali `belum`, `rejection_reason` tersimpan, `proof_url` direset ✅
+  - Anggota mencoba klaim iuran milik anggota lain → **ditolak sistem** dengan pesan error yang jelas ✅
 
 ---
 
 ## Ringkasan Prioritas Selanjutnya (rekomendasi urutan kerja)
 
-1. **Fase 4 dulu** (klaim & verifikasi iuran) — ini langsung menutup masalah nyata yang sudah terjadi, dampaknya paling terasa untuk bendahara & anggota
-2. **Audit log dasar** (sisa Fase 1) — supaya Fase 4 langsung punya jejak audit sejak awal, bukan ditambah belakangan
-3. **Tutup buku bulanan** (Fase 2) — supaya checklist rekonsiliasi di §4.8 bisa langsung memanfaatkan status `pending_verifikasi` dari Fase 4
-4. **Export laporan PDF/CSV** (Fase 2) — kebutuhan administratif, tidak urgent tapi bernilai untuk transparansi ke anggota
-5. **Reminder email & sisanya** (Fase 3) — pelengkap, bisa menyusul setelah alur inti pencatatan solid
+1. ~~**Fase 4** (klaim & verifikasi iuran)~~ — ✅ selesai (9/10, sisa notifikasi email)
+2. ~~**Audit log dasar** (Fase 1.7)~~ — ✅ selesai
+3. **Tutup buku bulanan** (Fase 2.2) — sekarang bisa langsung memanfaatkan status `pending_verifikasi` dari Fase 4 untuk checklist rekonsiliasi
+4. **Reminder email + notifikasi verifikasi** (Fase 3.1 + 4.7) — sekalian setup Resend, dua kebutuhan notifikasi ini bisa dikerjakan bareng
+5. **Export laporan PDF/CSV** (Fase 2.3–2.4)
+6. **Sisanya**: settings kategori (2.5), upload struk (3.2), PWA (3.3), role approval (3.4)
 
 ---
 
