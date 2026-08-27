@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import KlaimIuranCard from "./KlaimIuranCard";
+import IuranMemberList from "./IuranMemberList";
 
 const MONTH_NAMES = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -35,41 +36,6 @@ async function createPeriod(formData) {
   await supabase
     .from("dues_periods")
     .insert({ month, year, amount_default: 20000 });
-
-  revalidatePath("/iuran");
-}
-
-async function togglePayment(formData) {
-  "use server";
-  const memberId = formData.get("memberId");
-  const periodId = formData.get("periodId");
-  const currentStatus = formData.get("currentStatus");
-  const amount = Number(formData.get("amount"));
-  const paymentId = formData.get("paymentId");
-
-  const supabase = await createClient();
-
-  if (currentStatus === "lunas") {
-    if (paymentId) {
-      await supabase
-        .from("dues_payments")
-        .update({ status: "belum", paid_at: null })
-        .eq("id", paymentId);
-    }
-  } else if (paymentId) {
-    await supabase
-      .from("dues_payments")
-      .update({ status: "lunas", paid_at: new Date().toISOString(), amount })
-      .eq("id", paymentId);
-  } else {
-    await supabase.from("dues_payments").insert({
-      member_id: memberId,
-      period_id: periodId,
-      status: "lunas",
-      paid_at: new Date().toISOString(),
-      amount,
-    });
-  }
 
   revalidatePath("/iuran");
 }
@@ -227,80 +193,47 @@ export default async function IuranPage({ searchParams }) {
             </div>
           )}
 
-          <div className="rounded-xl border border-gray-200 bg-white divide-y">
-            {(activeMembers ?? []).map((m) => {
-              const payment = paymentByMember.get(m.id);
-              const status = payment?.status ?? "belum";
-              const badge = STATUS_BADGE[status];
-              const isPaid = status === "lunas";
-              const isPending = status === "pending_verifikasi";
-              return (
-                <div
-                  key={m.id}
-                  className="p-4 flex items-center justify-between gap-3"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{m.name}</p>
-                    {isPaid && payment?.paid_at && (
-                      <p className="text-xs text-gray-400">
-                        Dibayar{" "}
-                        {new Date(payment.paid_at).toLocaleDateString(
-                          "id-ID",
-                          { day: "numeric", month: "short" }
-                        )}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
+          {canManage ? (
+            <IuranMemberList
+              members={activeMembers ?? []}
+              initialPayments={payments}
+              periodId={period.id}
+              amountDefault={period.amount_default}
+            />
+          ) : (
+            <div className="rounded-xl border border-gray-200 bg-white divide-y">
+              {(activeMembers ?? []).map((m) => {
+                const payment = paymentByMember.get(m.id);
+                const status = payment?.status ?? "belum";
+                const badge = STATUS_BADGE[status];
+                const isPaid = status === "lunas";
+                return (
+                  <div
+                    key={m.id}
+                    className="p-4 flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{m.name}</p>
+                      {isPaid && payment?.paid_at && (
+                        <p className="text-xs text-gray-400">
+                          Dibayar{" "}
+                          {new Date(payment.paid_at).toLocaleDateString(
+                            "id-ID",
+                            { day: "numeric", month: "short" }
+                          )}
+                        </p>
+                      )}
+                    </div>
                     <span
                       className={`text-xs px-2 py-1 rounded-full ${badge.className}`}
                     >
                       {badge.label}
                     </span>
-                    {canManage && !isPending && (
-                      <form action={togglePayment}>
-                        <input type="hidden" name="memberId" value={m.id} />
-                        <input
-                          type="hidden"
-                          name="periodId"
-                          value={period.id}
-                        />
-                        <input
-                          type="hidden"
-                          name="currentStatus"
-                          value={payment?.status ?? "belum"}
-                        />
-                        <input
-                          type="hidden"
-                          name="amount"
-                          value={period.amount_default}
-                        />
-                        <input
-                          type="hidden"
-                          name="paymentId"
-                          value={payment?.id ?? ""}
-                        />
-                        <button
-                          type="submit"
-                          className="text-xs rounded-lg border border-gray-300 px-2.5 py-1.5 hover:bg-gray-50"
-                        >
-                          {isPaid ? "Batalkan" : "Tandai Lunas"}
-                        </button>
-                      </form>
-                    )}
-                    {canManage && isPending && (
-                      <a
-                        href="/iuran/verifikasi"
-                        className="text-xs rounded-lg border border-amber-300 text-amber-700 px-2.5 py-1.5 hover:bg-amber-50"
-                      >
-                        Verifikasi
-                      </a>
-                    )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </main>
