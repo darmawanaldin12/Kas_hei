@@ -92,6 +92,14 @@ export default async function DashboardPage() {
             Kelola Anggota →
           </a>
         )}
+        {role === "admin" && (
+          <a
+            href="/audit-log"
+            className="text-sm rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
+          >
+            Audit Log →
+          </a>
+        )}
       </div>
 
       <div className="rounded-xl border border-gray-200 p-6 bg-white mb-4">
