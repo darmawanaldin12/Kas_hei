@@ -129,6 +129,14 @@ export default async function DashboardPage() {
             Kelola Anggota →
           </a>
         )}
+        {canManage && (
+          <a
+            href="/laporan/tahunan"
+            className="text-sm rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
+          >
+            Laporan Tahunan →
+          </a>
+        )}
         {role === "admin" && (
           <a
             href="/audit-log"
