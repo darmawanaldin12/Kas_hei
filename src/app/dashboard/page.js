@@ -139,6 +139,14 @@ export default async function DashboardPage() {
         )}
         {role === "admin" && (
           <a
+            href="/tutup-buku"
+            className="text-sm rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
+          >
+            Tutup Buku →
+          </a>
+        )}
+        {role === "admin" && (
+          <a
             href="/audit-log"
             className="text-sm rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
           >
