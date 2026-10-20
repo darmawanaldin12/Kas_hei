@@ -3,6 +3,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { sb } from '../../lib/supabase';
 
+// Login pakai nama login (mis. "budi"). Di belakang layar dipetakan ke email internal.
+// Akun lama yang masih pakai email tetap bisa masuk (kalau ada "@", dianggap email).
+const keEmail = (v) => {
+  const s = v.trim().toLowerCase();
+  return s.includes('@') ? s : s + '@kas.internal';
+};
+
 export default function Login() {
   const r = useRouter();
   const [e, setE] = useState('');
@@ -13,8 +20,8 @@ export default function Login() {
   async function masuk(ev) {
     ev.preventDefault();
     setBusy(true); setM('');
-    const { error } = await sb.auth.signInWithPassword({ email: e.trim(), password: p });
-    if (error) { setM('Email atau kata sandi salah'); setBusy(false); } else r.replace('/');
+    const { error } = await sb.auth.signInWithPassword({ email: keEmail(e), password: p });
+    if (error) { setM('Nama atau kata sandi salah'); setBusy(false); } else r.replace('/');
   }
 
   return (
@@ -23,12 +30,12 @@ export default function Login() {
       <h1>Kas<br />Kantor</h1>
       <p>Masuk untuk melihat dan mencatat kas.</p>
       <form className="card" onSubmit={masuk}>
-        <label><small>Email</small><input className="in" type="email" required value={e} onChange={(x) => setE(x.target.value)} placeholder="nama@kantor.com" /></label>
-        <label><small>Kata sandi</small><input className="in" type="password" required value={p} onChange={(x) => setP(x.target.value)} placeholder="••••••••" /></label>
+        <label><small>Nama</small><input className="in" required autoCapitalize="none" autoCorrect="off" autoComplete="username" value={e} onChange={(x) => setE(x.target.value)} placeholder="mis. budi" /></label>
+        <label><small>Kata sandi</small><input className="in" type="password" required autoComplete="current-password" value={p} onChange={(x) => setP(x.target.value)} placeholder="••••••••" /></label>
         <button className="btn" disabled={busy}>{busy ? 'Memproses…' : 'Masuk'}</button>
       </form>
       {m && <div className="note" style={{ background: '#ff6b9d' }}>{m}</div>}
-      <div className="note">Akun dibuat oleh ketua. Peran kamu (anggota, bendahara, ketua) sudah ditentukan.</div>
+      <div className="note">Akun dibuat oleh ketua. Kata sandi awal anggota adalah NIK.</div>
     </div>
   );
 }
