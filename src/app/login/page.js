@@ -26,15 +26,18 @@ export default function Login() {
 
   return (
     <div className="login">
-      <div className="logo">$</div>
-      <h1>Kas<br />Kantor</h1>
-      <p>Masuk untuk melihat dan mencatat kas.</p>
+      <div className="login-top">
+        <div className="logo">$</div>
+        <h1>Kas<br />Kantor</h1>
+        <span className="stk">Masuk dulu ya</span>
+        <p>Masuk untuk melihat dan mencatat kas.</p>
+      </div>
       <form className="card" onSubmit={masuk}>
         <label><small>Nama</small><input className="in" required autoCapitalize="none" autoCorrect="off" autoComplete="username" value={e} onChange={(x) => setE(x.target.value)} placeholder="mis. budi" /></label>
         <label><small>Kata sandi</small><input className="in" type="password" required autoComplete="current-password" value={p} onChange={(x) => setP(x.target.value)} placeholder="••••••••" /></label>
         <button className="btn" disabled={busy}>{busy ? 'Memproses…' : 'Masuk'}</button>
       </form>
-      {m && <div className="note" style={{ background: '#ff6b9d' }}>{m}</div>}
+      {m && <div className="note bad">{m}</div>}
       <div className="note">Akun dibuat oleh ketua. Kata sandi awal anggota adalah NIK.</div>
     </div>
   );

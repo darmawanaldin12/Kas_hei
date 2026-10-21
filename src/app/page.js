@@ -22,7 +22,7 @@ function Home({ me }) {
   const pct = d.n ? Math.round((d.l / d.n) * 100) : 0;
   return (
     <>
-      <div className="card blue">
+      <div className="card hero">
         <small>Saldo kas</small>
         <div className="big">{rp(d.s.saldo)}</div>
         <div className="two">

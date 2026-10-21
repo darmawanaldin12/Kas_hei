@@ -39,7 +39,7 @@ function Bukti({ me }) {
         <div><small>Iuran {lb(b)} {b.slice(0, 4)}</small><div className="big" style={{ margin: 0, fontSize: 24 }}>{rp(nom)}</div></div>
         <span className={'tag ' + tag[0]}>{tag[1]}</span>
       </div>
-      {st?.status === 'ditolak' && st.catatan && <div className="note" style={{ background: '#ff6b9d' }}>{st.catatan}</div>}
+      {st?.status === 'ditolak' && st.catatan && <div className="note bad">{st.catatan}</div>}
       <small>Metode bayar</small>
       <div className="seg">{['transfer', 'tunai'].map((m) => <button key={m} className={met === m ? 'on' : ''} onClick={() => setMet(m)}>{m}</button>)}</div>
       <label><small>Foto / screenshot bukti</small>

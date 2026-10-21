@@ -1,7 +1,7 @@
 // Service worker Kas Kantor.
 // Hanya menyimpan aset statis dan halaman offline.
 // Data kas/iuran TIDAK pernah di-cache supaya angka selalu terbaru.
-const CACHE = 'kas-kantor-v1';
+const CACHE = 'kas-kantor-v2';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
