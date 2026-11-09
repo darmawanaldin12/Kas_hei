@@ -11,6 +11,7 @@ const IKON = {
   list: 'M5 3h14v18H5zM9 8h6M9 12h6M9 16h4',
   users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M17 4a4 4 0 0 1 0 7M22 21v-2a5 5 0 0 0-4-4.9',
   up: 'M12 16V4M7 9l5-5 5 5M4 20h16',
+  ok: 'M5 12l5 5L20 7',
 };
 const ico = (k) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={IKON[k]} /></svg>
@@ -34,7 +35,7 @@ export default function Shell({ title, only, children }) {
 
   if (!me) return <div className="app"><p className="mut">Memuat…</p></div>;
   const last = me.role === 'bendahara' ? ['/catat', 'plus', 'Catat'] : me.role === 'ketua' ? ['/anggota', 'users', 'Anggota'] : ['/bukti', 'up', 'Bukti'];
-  const nav = [['/', 'home', 'Beranda'], ['/grid', 'grid', 'Iuran'], last, ['/riwayat', 'list', 'Riwayat']];
+  const nav = [['/', 'home', 'Beranda'], ['/grid', 'grid', 'Iuran'], last, ...(me.role === 'bendahara' ? [['/verifikasi', 'ok', 'Verifikasi']] : []), ['/riwayat', 'list', 'Riwayat']];
 
   return (
     <div className="app">
