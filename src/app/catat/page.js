@@ -1,10 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
+import Sukses from '../../components/Sukses';
 import { sb, rp, ym, addM, lb } from '../../lib/supabase';
 
 function Catat({ me }) {
+  const r = useRouter();
   const b = ym();
   const ms = Array.from({ length: 12 }, (_, i) => addM(b, i - 8));
   const nm = (m) => lb(m) + (m.slice(0, 4) !== b.slice(0, 4) ? " '" + m.slice(2, 4) : '');
@@ -27,6 +30,7 @@ function Catat({ me }) {
   const [ver, setVer] = useState(0);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sukses, setSukses] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -69,25 +73,47 @@ function Catat({ me }) {
       anggota_id: aId, bulan, nominal: nom, metode: met, bukti_path: path,
       status: 'lunas', catatan: c || null, dikirim_at: now,
     }));
-    const r = await sb.from('iuran').upsert(rows, { onConflict: 'anggota_id,bulan' });
+    const res = await sb.from('iuran').upsert(rows, { onConflict: 'anggota_id,bulan' });
     setBusy(false);
-    if (r.error) return setMsg(r.error.message);
-    setMsg('Tersimpan ✓ ' + rows.length + ' bulan, total ' + rp(nom * rows.length));
+    if (res.error) return setMsg(res.error.message);
+    const daftar = [...pilih].sort().map(nm).join(', ');
+    const nama = ang.find((x) => x.id === aId)?.nama;
+    setMsg('');
+    setSukses({
+      judul: 'Pembayaran tersimpan',
+      sub: 'Tercatat lunas dan sudah masuk ke kas',
+      rincian: [['Anggota', nama], ['Bulan', daftar], ['Metode', met], ['Total', rp(nom * rows.length), true]],
+    });
     setPilih([]); setFile(null); setFkey((v) => v + 1); setC(''); setVer((v) => v + 1);
   }
 
   async function simpanKeluar() {
     if (!(+jk > 0)) return setMsg('Isi jumlah pengeluaran');
     setBusy(true); setMsg('Menyimpan…');
-    const r = await sb.from('kas_transaksi').insert({ jenis: 'keluar', kategori_id: k || null, jumlah: +jk, keterangan: c || null });
+    const res = await sb.from('kas_transaksi').insert({ jenis: 'keluar', kategori_id: k || null, jumlah: +jk, keterangan: c || null });
     setBusy(false);
-    setMsg(r.error ? r.error.message : 'Tersimpan ✓');
-    if (!r.error) { setJk(''); setC(''); }
+    if (res.error) return setMsg(res.error.message);
+    setMsg('');
+    setSukses({
+      judul: 'Pengeluaran tersimpan',
+      sub: 'Sudah tercatat di kas',
+      rincian: [['Kategori', kat.find((x) => x.id === k)?.nama], ['Keterangan', c], ['Jumlah', rp(+jk), true]],
+    });
+    setJk(''); setC('');
   }
 
   if (!ready) return <Memuat />;
   return (
     <>
+      {sukses && (
+        <Sukses
+          judul={sukses.judul} sub={sukses.sub} rincian={sukses.rincian}
+          tombol={[
+            { teks: 'Selesai', klik: () => r.push('/') },
+            { teks: 'Catat lagi', kelas: 'y', klik: () => setSukses(null) },
+          ]}
+        />
+      )}
       <div className="seg">
         <button className={mode === 'iuran' ? 'on' : ''} onClick={() => { setMode('iuran'); setMsg(''); }}>Iuran masuk</button>
         <button className={mode === 'keluar' ? 'on' : ''} onClick={() => { setMode('keluar'); setMsg(''); }}>Pengeluaran</button>

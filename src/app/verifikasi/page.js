@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
+import Sukses from '../../components/Sukses';
 import { sb, rp, ym, lb } from '../../lib/supabase';
 
 const thn = ym().slice(0, 4);
@@ -14,6 +15,7 @@ function Verifikasi() {
   const [alasan, setAlasan] = useState('');
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sukses, setSukses] = useState(null);
 
   const load = async () => {
     const { data: rows } = await sb.from('iuran')
@@ -45,21 +47,35 @@ function Verifikasi() {
   };
   useEffect(() => { load(); }, []);
 
-  async function ubah(ids, patch) {
+  async function ubah(x, ids, patch) {
     setBusy(true); setMsg('');
     const { error } = await sb.from('iuran').update(patch).in('id', ids);
     setBusy(false);
     if (error) return setMsg(error.message);
+    const dipilih = x.items.filter((it) => ids.includes(it.id));
+    const total = dipilih.reduce((a, it) => a + Number(it.nominal || 0), 0);
+    const lunas = patch.status === 'lunas';
+    setSukses({
+      tipe: lunas ? 'ok' : 'tolak',
+      judul: lunas ? 'Bukti disetujui' : 'Bukti ditolak',
+      sub: lunas ? 'Tercatat lunas dan masuk ke kas' : 'Anggota akan melihat alasan penolakan',
+      rincian: [['Anggota', x.nama], ['Bulan', dipilih.map((it) => nm(it.bulan)).join(', ')], ['Alasan', lunas ? '' : patch.catatan], [lunas ? 'Total' : 'Nominal', rp(total), true]],
+    });
     setTolak(null); setAlasan('');
-    setMsg((patch.status === 'lunas' ? 'Disetujui, tercatat lunas ' : 'Ditolak ') + ids.length + ' bulan ✓');
     load();
   }
 
   if (!d) return <Memuat />;
   return (
     <>
+      {sukses && (
+        <Sukses
+          tipe={sukses.tipe} judul={sukses.judul} sub={sukses.sub} rincian={sukses.rincian}
+          tombol={[{ teks: 'Lanjut', klik: () => setSukses(null) }]}
+        />
+      )}
       <small>Periksa bukti dari anggota. Kalau satu bukti untuk beberapa bulan, centang bulan yang jumlah transfernya sesuai.</small>
-      {msg && <div className="note">{msg}</div>}
+      {msg && <div className="note bad">{msg}</div>}
       {!d.length && <p className="mut">Tidak ada bukti yang menunggu verifikasi.</p>}
       {d.map((x) => {
         const pilih = x.items.filter((it) => sel[it.id]).map((it) => it.id);
@@ -79,7 +95,7 @@ function Verifikasi() {
                     onClick={() => setSel((s) => ({ ...s, [it.id]: !s[it.id] }))}
                     onKeyDown={(e) => { if (e.key === 'Enter') setSel((s) => ({ ...s, [it.id]: !s[it.id] })); }}
                     style={{ cursor: 'pointer', ...(on ? { background: '#1a1a2e', color: '#fff' } : {}) }}>
-                    {on ? '☑' : '☐'} {nm(it.bulan)} · {rp(it.nominal)}
+                    {on ? '\u2611' : '\u2610'} {nm(it.bulan)} · {rp(it.nominal)}
                   </span>
                 );
               })}
@@ -92,13 +108,13 @@ function Verifikasi() {
                 <label><small>Alasan penolakan</small>
                   <input className="in" value={alasan} onChange={(e) => setAlasan(e.target.value)} placeholder="Misal: foto buram, nominal kurang" /></label>
                 <div className="row" style={{ gap: 8 }}>
-                  <button className="btn pink s" disabled={busy || !alasan.trim() || !pilih.length} onClick={() => ubah(pilih, { status: 'ditolak', catatan: alasan.trim() })}>Tolak {pilih.length} bulan</button>
+                  <button className="btn pink s" disabled={busy || !alasan.trim() || !pilih.length} onClick={() => ubah(x, pilih, { status: 'ditolak', catatan: alasan.trim() })}>Tolak {pilih.length} bulan</button>
                   <button className="btn s" disabled={busy} onClick={() => { setTolak(null); setAlasan(''); }}>Batal</button>
                 </div>
               </>
             ) : (
               <div className="row" style={{ gap: 8, marginTop: 10 }}>
-                <button className="btn y s" disabled={busy || !pilih.length} onClick={() => ubah(pilih, { status: 'lunas', catatan: null })}>Setujui {pilih.length} bulan ({rp(total)})</button>
+                <button className="btn y s" disabled={busy || !pilih.length} onClick={() => ubah(x, pilih, { status: 'lunas', catatan: null })}>Setujui {pilih.length} bulan ({rp(total)})</button>
                 <button className="btn pink s" disabled={busy || !pilih.length} onClick={() => setTolak(x.k)}>Tolak</button>
               </div>
             )}

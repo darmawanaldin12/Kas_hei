@@ -1,10 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
+import Sukses from '../../components/Sukses';
 import { sb, rp, ym, addM, lb } from '../../lib/supabase';
 
 function Bukti({ me }) {
+  const r = useRouter();
   const b = ym();
   const ms = [-5, -4, -3, -2, -1, 0, 1, 2].map((i) => addM(b, i));
   const nm = (m) => lb(m) + (m.slice(0, 4) !== b.slice(0, 4) ? " '" + m.slice(2, 4) : '');
@@ -18,6 +21,7 @@ function Bukti({ me }) {
   const [fkey, setFkey] = useState(0);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sukses, setSukses] = useState(null);
 
   const load = async () => {
     const [s, i] = await Promise.all([
@@ -71,10 +75,15 @@ function Bukti({ me }) {
       anggota_id: me.id, bulan, nominal: nom, metode: met, bukti_path: path,
       status: 'menunggu_verifikasi', catatan: null, dikirim_at: now,
     }));
-    const r = await sb.from('iuran').upsert(rows, { onConflict: 'anggota_id,bulan' });
+    const res = await sb.from('iuran').upsert(rows, { onConflict: 'anggota_id,bulan' });
     setBusy(false);
-    if (r.error) return setMsg(r.error.message);
-    setMsg('Terkirim untuk ' + rows.length + ' bulan. Tunggu verifikasi bendahara.');
+    if (res.error) return setMsg(res.error.message);
+    setMsg('');
+    setSukses({
+      judul: 'Bukti terkirim',
+      sub: 'Tinggal tunggu bendahara memeriksa',
+      rincian: [['Bulan', rows.map((x) => nm(x.bulan)).join(', ')], ['Metode', met], ['Status', 'Menunggu verifikasi'], ['Total', rp(nom * rows.length), true]],
+    });
     setFile(null); setFkey((k) => k + 1); setPilih([]); setJml(''); load();
   }
 
@@ -83,6 +92,15 @@ function Bukti({ me }) {
   const bebas = ms.filter(bisa).length;
   return (
     <>
+      {sukses && (
+        <Sukses
+          judul={sukses.judul} sub={sukses.sub} rincian={sukses.rincian}
+          tombol={[
+            { teks: 'Selesai', klik: () => r.push('/') },
+            { teks: 'Kirim lagi', kelas: 'y', klik: () => setSukses(null) },
+          ]}
+        />
+      )}
       <small>Wajib dikirim setelah bayar iuran. Bayar beberapa bulan sekaligus? Ketik jumlah transfernya atau centang bulannya, cukup satu foto bukti.</small>
       <small style={{ display: 'block', marginTop: 12 }}>Pilih bulan yang dibayar ({rp(nom)} per bulan)</small>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 6 }}>
@@ -94,7 +112,7 @@ function Bukti({ me }) {
           return (
             <span key={m} role="button" tabIndex={0} onClick={() => toggle(m)} onKeyDown={(e) => { if (e.key === 'Enter') toggle(m); }}
               className="tag p" style={{ textAlign: 'center', cursor: 'pointer', ...(on ? { background: '#1a1a2e', color: '#fff' } : {}) }}>
-              {on ? '☑' : '☐'} {nm(m)}
+              {on ? '\u2611' : '\u2610'} {nm(m)}
             </span>
           );
         })}
