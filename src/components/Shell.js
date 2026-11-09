@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { sb } from '../lib/supabase';
+import Memuat from './Memuat';
 
 const IKON = {
   home: 'M3 11 12 3l9 8M5 10v10h14V10',
@@ -33,7 +34,7 @@ export default function Shell({ title, only, children }) {
     })();
   }, []);
 
-  if (!me) return <div className="app"><p className="mut">Memuat…</p></div>;
+  if (!me) return <div className="app"><Memuat /></div>;
   const last = me.role === 'bendahara' ? ['/catat', 'plus', 'Catat'] : me.role === 'ketua' ? ['/anggota', 'users', 'Anggota'] : ['/bukti', 'up', 'Bukti'];
   const nav = [
     ['/', 'home', 'Beranda'],

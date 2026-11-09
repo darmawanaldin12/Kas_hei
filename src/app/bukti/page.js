@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
+import Memuat from '../../components/Memuat';
 import { sb, rp, ym, addM, lb } from '../../lib/supabase';
 
 function Bukti({ me }) {
@@ -77,7 +78,7 @@ function Bukti({ me }) {
     setFile(null); setFkey((k) => k + 1); setPilih([]); setJml(''); load();
   }
 
-  if (!st) return <p className="mut">Memuat…</p>;
+  if (!st) return <Memuat />;
   const ditolak = Object.values(st).filter((x) => x.status === 'ditolak' && x.catatan);
   const bebas = ms.filter(bisa).length;
   return (

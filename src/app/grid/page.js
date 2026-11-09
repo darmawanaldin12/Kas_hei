@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
+import Memuat from '../../components/Memuat';
 import { sb, rp, ym, addM, lb } from '../../lib/supabase';
 
 const tgl = (s) => (s ? new Date(s).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' }) + ' WIB' : null);
@@ -60,7 +61,7 @@ function Grid() {
         <span><span className="tag g">Lunas ✓</span> <span className="tag p">Belum ✕</span> <span className="tag" style={kuning}>Menunggu …</span></span>
       </div>
       <small>{nm(ms[0])} → {nm(end)} {end.slice(0, 4)} · Ketuk bulan berstatus ✓ atau … untuk melihat rincian</small>
-      {!rows ? <p className="mut">Memuat…</p> : rows.map((x) => {
+      {!rows ? <Memuat /> : rows.map((x) => {
         const belum = ms.filter((_, i) => !x.c[i]);
         const tunggu = ms.filter((_, i) => x.c[i] && x.c[i].status === 'menunggu_verifikasi');
         return (
@@ -118,7 +119,7 @@ function Grid() {
             {det.catatan && <Info k="Catatan" v={det.catatan} />}
             <div style={{ marginTop: 12 }}>
               <small>Foto bukti</small>
-              {!f || f.s === 'muat' ? <p className="mut">Memuat foto…</p>
+              {!f || f.s === 'muat' ? <Memuat kecil />
                 : f.s === 'ok' ? <a href={f.url} target="_blank" rel="noreferrer"><img src={f.url} alt={'Bukti ' + det.nama} style={{ width: '100%', borderRadius: 12, marginTop: 6 }} /></a>
                 : f.s === 'tanpa' ? <p className="mut">Tidak ada foto (dicatat langsung oleh bendahara).</p>
                 : <p className="mut">Foto bukti hanya bisa dilihat bendahara, ketua, dan pemilik iuran.</p>}

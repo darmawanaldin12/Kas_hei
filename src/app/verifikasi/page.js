@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
+import Memuat from '../../components/Memuat';
 import { sb, rp, ym, lb } from '../../lib/supabase';
 
 const thn = ym().slice(0, 4);
@@ -54,7 +55,7 @@ function Verifikasi() {
     load();
   }
 
-  if (!d) return <p className="mut">Memuat…</p>;
+  if (!d) return <Memuat />;
   return (
     <>
       <small>Periksa bukti dari anggota. Kalau satu bukti untuk beberapa bulan, centang bulan yang jumlah transfernya sesuai.</small>
@@ -78,7 +79,7 @@ function Verifikasi() {
                     onClick={() => setSel((s) => ({ ...s, [it.id]: !s[it.id] }))}
                     onKeyDown={(e) => { if (e.key === 'Enter') setSel((s) => ({ ...s, [it.id]: !s[it.id] })); }}
                     style={{ cursor: 'pointer', ...(on ? { background: '#1a1a2e', color: '#fff' } : {}) }}>
-                    {on ? '☑' : '☐'} {nm(it.bulan)} {it.bulan.slice(0, 4) === thn ? '' : ''}· {rp(it.nominal)}
+                    {on ? '☑' : '☐'} {nm(it.bulan)} · {rp(it.nominal)}
                   </span>
                 );
               })}

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Shell from '../components/Shell';
+import Memuat from '../components/Memuat';
 import { sb, rp, ym, lb } from '../lib/supabase';
 
 function Home({ me }) {
@@ -18,7 +19,7 @@ function Home({ me }) {
       setD({ s: s.data || {}, n: p.count || 0, l: l.count || 0, t: t.data || [] });
     })();
   }, []);
-  if (!d) return <p className="mut">Memuat…</p>;
+  if (!d) return <Memuat />;
   const pct = d.n ? Math.round((d.l / d.n) * 100) : 0;
   return (
     <>
@@ -39,7 +40,7 @@ function Home({ me }) {
         <div className="card row" key={x.anggota_id}>
           <span className="av s">{x.nama[0]}</span><b>{x.nama}</b>
           {me.role === 'bendahara' && <Link className="btn pink s" href="/catat">Catat</Link>}
-          {me.role === 'anggota' && x.anggota_id === me.id && <Link className="btn y s" href="/bukti">Kirim bukti</Link>}
+          {(me.role === 'anggota' || me.role === 'ketua') && x.anggota_id === me.id && <Link className="btn y s" href="/bukti">Kirim bukti</Link>}
         </div>
       ))}
     </>

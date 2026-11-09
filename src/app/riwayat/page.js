@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
+import Memuat from '../../components/Memuat';
 import { sb, rp, lb } from '../../lib/supabase';
 
 const tgl = (s) => new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -24,7 +25,7 @@ function Riwayat() {
       setR(rows.map((x) => ({ ...x, iu: info[x.iuran_id] })));
     })();
   }, []);
-  if (!r) return <p className="mut">Memuat…</p>;
+  if (!r) return <Memuat />;
   if (!r.length) return <p className="mut">Belum ada transaksi.</p>;
   return r.map((x) => (
     <div className="card row" key={x.id}>
