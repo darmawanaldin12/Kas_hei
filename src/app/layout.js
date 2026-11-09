@@ -1,6 +1,7 @@
 import './globals.css';
 import { Bricolage_Grotesque } from 'next/font/google';
 import PwaRegister from '../components/PwaRegister';
+import EfekTekan from '../components/EfekTekan';
 
 const font = Bricolage_Grotesque({ subsets: ['latin'], display: 'swap' });
 
@@ -19,6 +20,7 @@ export default function RootLayout({ children }) {
       <body className={font.className}>
         {children}
         <PwaRegister />
+        <EfekTekan />
       </body>
     </html>
   );
