@@ -1,10 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
-import { sb, rp, lb } from '../../lib/supabase';
+import { sb, rp, ym, lb } from '../../lib/supabase';
+
+const thn = ym().slice(0, 4);
+const nm = (m) => lb(m) + (m.slice(0, 4) !== thn ? " '" + m.slice(2, 4) : '');
 
 function Verifikasi() {
   const [d, setD] = useState(null);
+  const [sel, setSel] = useState({});
   const [tolak, setTolak] = useState(null);
   const [alasan, setAlasan] = useState('');
   const [msg, setMsg] = useState('');
@@ -19,60 +23,87 @@ function Verifikasi() {
     const ids = [...new Set(list.map((x) => x.anggota_id))];
     const { data: ppl } = ids.length ? await sb.from('profiles').select('id,nama').in('id', ids) : { data: [] };
     const nama = Object.fromEntries((ppl || []).map((p) => [p.id, p.nama]));
-    const lengkap = await Promise.all(list.map(async (x) => {
-      let url = null;
+
+    const g = {};
+    list.forEach((x) => {
+      const k = x.anggota_id + '|' + (x.bukti_path || x.id);
+      if (!g[k]) g[k] = { k, nama: nama[x.anggota_id] || '?', metode: x.metode, bukti_path: x.bukti_path, items: [] };
+      g[k].items.push(x);
+    });
+    const grup = Object.values(g);
+    grup.forEach((x) => x.items.sort((a, b) => a.bulan.localeCompare(b.bulan)));
+    await Promise.all(grup.map(async (x) => {
+      x.url = null;
       if (x.bukti_path) {
         const s = await sb.storage.from('bukti').createSignedUrl(x.bukti_path, 3600);
-        url = s.data?.signedUrl || null;
+        x.url = s.data?.signedUrl || null;
       }
-      return { ...x, nama: nama[x.anggota_id] || '?', url };
     }));
-    setD(lengkap);
+    setSel(Object.fromEntries(list.map((x) => [x.id, true])));
+    setD(grup);
   };
   useEffect(() => { load(); }, []);
 
-  async function ubah(id, patch) {
+  async function ubah(ids, patch) {
     setBusy(true); setMsg('');
-    const { error } = await sb.from('iuran').update(patch).eq('id', id);
+    const { error } = await sb.from('iuran').update(patch).in('id', ids);
     setBusy(false);
     if (error) return setMsg(error.message);
     setTolak(null); setAlasan('');
-    setMsg(patch.status === 'lunas' ? 'Disetujui, tercatat lunas ✓' : 'Bukti ditolak ✓');
+    setMsg((patch.status === 'lunas' ? 'Disetujui, tercatat lunas ' : 'Ditolak ') + ids.length + ' bulan ✓');
     load();
   }
 
   if (!d) return <p className="mut">Memuat…</p>;
   return (
     <>
-      <small>Periksa bukti dari anggota, lalu setujui atau tolak.</small>
+      <small>Periksa bukti dari anggota. Kalau satu bukti untuk beberapa bulan, centang bulan yang jumlah transfernya sesuai.</small>
       {msg && <div className="note">{msg}</div>}
       {!d.length && <p className="mut">Tidak ada bukti yang menunggu verifikasi.</p>}
-      {d.map((x) => (
-        <div className="card" key={x.id} style={{ marginTop: 12 }}>
-          <div className="spread">
-            <div><b style={{ display: 'block' }}>{x.nama}</b><small>Iuran {lb(x.bulan)} {x.bulan.slice(0, 4)} · {x.metode}</small></div>
-            <b>{rp(x.nominal)}</b>
-          </div>
-          {x.url
-            ? <a href={x.url} target="_blank" rel="noreferrer"><img src={x.url} alt={'Bukti ' + x.nama} style={{ width: '100%', borderRadius: 12, marginTop: 10 }} /></a>
-            : <p className="mut">Foto bukti tidak bisa dimuat.</p>}
-          {tolak === x.id ? (
-            <>
-              <label><small>Alasan penolakan</small>
-                <input className="in" value={alasan} onChange={(e) => setAlasan(e.target.value)} placeholder="Misal: foto buram, nominal tidak sesuai" /></label>
-              <div className="row" style={{ gap: 8 }}>
-                <button className="btn pink s" disabled={busy || !alasan.trim()} onClick={() => ubah(x.id, { status: 'ditolak', catatan: alasan.trim() })}>Tolak bukti</button>
-                <button className="btn s" disabled={busy} onClick={() => { setTolak(null); setAlasan(''); }}>Batal</button>
-              </div>
-            </>
-          ) : (
-            <div className="row" style={{ gap: 8, marginTop: 10 }}>
-              <button className="btn y s" disabled={busy} onClick={() => ubah(x.id, { status: 'lunas', catatan: null })}>Setujui</button>
-              <button className="btn pink s" disabled={busy} onClick={() => setTolak(x.id)}>Tolak</button>
+      {d.map((x) => {
+        const pilih = x.items.filter((it) => sel[it.id]).map((it) => it.id);
+        const total = x.items.filter((it) => sel[it.id]).reduce((a, it) => a + Number(it.nominal || 0), 0);
+        return (
+          <div className="card" key={x.k} style={{ marginTop: 12 }}>
+            <div className="spread">
+              <div><b style={{ display: 'block' }}>{x.nama}</b><small>{x.items.length} bulan · {x.metode}</small></div>
+              <b>{rp(x.items.reduce((a, it) => a + Number(it.nominal || 0), 0))}</b>
             </div>
-          )}
-        </div>
-      ))}
+            <small style={{ display: 'block', marginTop: 10 }}>Bulan yang disetujui/ditolak (ketuk untuk centang)</small>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+              {x.items.map((it) => {
+                const on = !!sel[it.id];
+                return (
+                  <span key={it.id} role="button" tabIndex={0} className="tag p"
+                    onClick={() => setSel((s) => ({ ...s, [it.id]: !s[it.id] }))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') setSel((s) => ({ ...s, [it.id]: !s[it.id] })); }}
+                    style={{ cursor: 'pointer', ...(on ? { background: '#1a1a2e', color: '#fff' } : {}) }}>
+                    {on ? '☑' : '☐'} {nm(it.bulan)} {it.bulan.slice(0, 4) === thn ? '' : ''}· {rp(it.nominal)}
+                  </span>
+                );
+              })}
+            </div>
+            {x.url
+              ? <a href={x.url} target="_blank" rel="noreferrer"><img src={x.url} alt={'Bukti ' + x.nama} style={{ width: '100%', borderRadius: 12, marginTop: 10 }} /></a>
+              : <p className="mut">Foto bukti tidak bisa dimuat.</p>}
+            {tolak === x.k ? (
+              <>
+                <label><small>Alasan penolakan</small>
+                  <input className="in" value={alasan} onChange={(e) => setAlasan(e.target.value)} placeholder="Misal: foto buram, nominal kurang" /></label>
+                <div className="row" style={{ gap: 8 }}>
+                  <button className="btn pink s" disabled={busy || !alasan.trim() || !pilih.length} onClick={() => ubah(pilih, { status: 'ditolak', catatan: alasan.trim() })}>Tolak {pilih.length} bulan</button>
+                  <button className="btn s" disabled={busy} onClick={() => { setTolak(null); setAlasan(''); }}>Batal</button>
+                </div>
+              </>
+            ) : (
+              <div className="row" style={{ gap: 8, marginTop: 10 }}>
+                <button className="btn y s" disabled={busy || !pilih.length} onClick={() => ubah(pilih, { status: 'lunas', catatan: null })}>Setujui {pilih.length} bulan ({rp(total)})</button>
+                <button className="btn pink s" disabled={busy || !pilih.length} onClick={() => setTolak(x.k)}>Tolak</button>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </>
   );
 }
