@@ -35,7 +35,14 @@ export default function Shell({ title, only, children }) {
 
   if (!me) return <div className="app"><p className="mut">Memuat…</p></div>;
   const last = me.role === 'bendahara' ? ['/catat', 'plus', 'Catat'] : me.role === 'ketua' ? ['/anggota', 'users', 'Anggota'] : ['/bukti', 'up', 'Bukti'];
-  const nav = [['/', 'home', 'Beranda'], ['/grid', 'grid', 'Iuran'], last, ...(me.role === 'bendahara' ? [['/verifikasi', 'ok', 'Verifikasi']] : []), ['/riwayat', 'list', 'Riwayat']];
+  const nav = [
+    ['/', 'home', 'Beranda'],
+    ['/grid', 'grid', 'Iuran'],
+    last,
+    ...(me.role === 'bendahara' ? [['/verifikasi', 'ok', 'Verifikasi']] : []),
+    ...(me.role === 'ketua' ? [['/bukti', 'up', 'Bukti']] : []),
+    ['/riwayat', 'list', 'Riwayat'],
+  ];
 
   return (
     <div className="app">

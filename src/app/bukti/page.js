@@ -130,5 +130,5 @@ function Bukti({ me }) {
 }
 
 export default function Page() {
-  return <Shell title="Kirim bukti" only={['anggota']}>{(me) => <Bukti me={me} />}</Shell>;
+  return <Shell title="Kirim bukti" only={['anggota', 'ketua']}>{(me) => <Bukti me={me} />}</Shell>;
 }
