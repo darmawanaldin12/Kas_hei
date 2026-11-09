@@ -1,5 +1,6 @@
 {
   "crons": [
-    { "path": "/api/cron/pengingat", "schedule": "0 1 * * 1" }
+    { "path": "/api/cron/pengingat", "schedule": "0 1 * * 1" },
+    { "path": "/api/cron/ping", "schedule": "0 2 * * 1,4" }
   ]
 }
