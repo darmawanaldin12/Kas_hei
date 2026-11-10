@@ -36,7 +36,7 @@ function Anggota({ me }) {
         <div className="card" style={{ marginTop: 14 }}>
           <label><small>Nama lengkap</small><input className="in" value={f.nama} onChange={(e) => set('nama', e.target.value)} /></label>
           <label><small>Nama login (huruf kecil, tanpa spasi)</small><input className="in" autoCapitalize="none" value={f.nama_login} onChange={(e) => set('nama_login', e.target.value.toLowerCase().replace(/\s/g, ''))} placeholder="mis. budi" /></label>
-          <label><small>Email (untuk pengingat)</small><input className="in" type="email" value={f.email_pengingat} onChange={(e) => set('email_pengingat', e.target.value)} /></label>
+          <label><small>Email untuk pengingat (opsional)</small><input className="in" type="email" value={f.email_pengingat} onChange={(e) => set('email_pengingat', e.target.value)} /></label>
           <label><small>Kata sandi (anggota: NIK, min. 6)</small><input className="in" value={f.password} onChange={(e) => set('password', e.target.value)} /></label>
           <label><small>Mulai iuran dari bulan (kosong = bulan ini)</small><input className="in" type="month" value={f.mulai} onChange={(e) => set('mulai', e.target.value)} /></label>
           <label><small>Peran</small><select className="in" value={f.role} onChange={(e) => set('role', e.target.value)}><option value="anggota">Anggota</option><option value="bendahara">Bendahara</option><option value="ketua">Ketua</option></select></label>
