@@ -5,6 +5,7 @@ import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
 import Sukses from '../../components/Sukses';
 import { sb, rp, ym, addM, lb } from '../../lib/supabase';
+import { siapkanFoto } from '../../lib/foto';
 
 function Catat({ me }) {
   const r = useRouter();
@@ -64,9 +65,11 @@ function Catat({ me }) {
     if (!aId) return setMsg('Pilih anggota dulu');
     if (!pilih.length) return setMsg('Pilih minimal satu bulan');
     if (!file) return setMsg('Foto bukti wajib diunggah');
-    setBusy(true); setMsg('Menyimpan…');
-    const path = `${me.id}/${Date.now()}-${file.name.replace(/[^\w.]/g, '_')}`;
-    const u = await sb.storage.from('bukti').upload(path, file);
+    setBusy(true); setMsg('Menyiapkan foto…');
+    const foto = await siapkanFoto(file);
+    setMsg('Menyimpan…');
+    const path = `${me.id}/${Date.now()}-${foto.name.replace(/[^\w.]/g, '_')}`;
+    const u = await sb.storage.from('bukti').upload(path, foto, { contentType: foto.type || undefined });
     if (u.error) { setBusy(false); return setMsg(u.error.message); }
     const now = new Date().toISOString();
     const rows = [...pilih].sort().map((bulan) => ({
@@ -134,7 +137,7 @@ function Catat({ me }) {
               return (
                 <span key={m} role="button" tabIndex={0} onClick={() => toggle(m)} onKeyDown={(e) => { if (e.key === 'Enter') toggle(m); }}
                   className="tag p" style={{ textAlign: 'center', cursor: 'pointer', ...(on ? { background: '#1a1a2e', color: '#fff' } : {}) }}>
-                  {on ? '\u2611' : '\u2610'} {nm(m)}
+                  {on ? '☑' : '☐'} {nm(m)}
                 </span>
               );
             })}
@@ -142,7 +145,7 @@ function Catat({ me }) {
           <small style={{ display: 'block', marginBottom: 12 }}>✓ lunas · … menunggu verifikasi (setujui di menu Verifikasi) · ☐ belum, bisa dipilih</small>
           <label><small>Jumlah (otomatis dari bulan yang dipilih)</small>
             <input className="in" readOnly placeholder="Rp 0" value={pilih.length ? rp(nom * pilih.length) : ''} /></label>
-          <small style={{ display: 'block', marginBottom: 12 }}>{pilih.length ? pilih.length + ' bulan \u00d7 ' + rp(nom) + ': ' + [...pilih].sort().map(nm).join(', ') : rp(nom) + ' per bulan'}</small>
+          <small style={{ display: 'block', marginBottom: 12 }}>{pilih.length ? pilih.length + ' bulan × ' + rp(nom) + ': ' + [...pilih].sort().map(nm).join(', ') : rp(nom) + ' per bulan'}</small>
           <small>Metode bayar</small>
           <div className="seg">{['transfer', 'tunai'].map((m) => <button key={m} className={met === m ? 'on' : ''} onClick={() => setMet(m)}>{m}</button>)}</div>
           <label><small>Foto / screenshot bukti (wajib)</small>
