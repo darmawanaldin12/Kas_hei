@@ -5,6 +5,7 @@ import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
 import Sukses from '../../components/Sukses';
 import { sb, rp, ym, addM, lb } from '../../lib/supabase';
+import { siapkanFoto } from '../../lib/foto';
 
 function Bukti({ me }) {
   const r = useRouter();
@@ -66,9 +67,11 @@ function Bukti({ me }) {
     if (!pilih.length) return setMsg('Pilih minimal satu bulan');
     if (!cocok) return setMsg('Jumlah transfer harus sama dengan jumlah bulan yang dicentang');
     if (!file) return setMsg('Pilih foto bukti dulu');
-    setBusy(true); setMsg('Mengirim…');
-    const path = `${me.id}/${Date.now()}-${file.name.replace(/[^\w.]/g, '_')}`;
-    const u = await sb.storage.from('bukti').upload(path, file);
+    setBusy(true); setMsg('Menyiapkan foto…');
+    const foto = await siapkanFoto(file);
+    setMsg('Mengirim…');
+    const path = `${me.id}/${Date.now()}-${foto.name.replace(/[^\w.]/g, '_')}`;
+    const u = await sb.storage.from('bukti').upload(path, foto, { contentType: foto.type || undefined });
     if (u.error) { setBusy(false); return setMsg(u.error.message); }
     const now = new Date().toISOString();
     const rows = [...pilih].sort().map((bulan) => ({
@@ -112,7 +115,7 @@ function Bukti({ me }) {
           return (
             <span key={m} role="button" tabIndex={0} onClick={() => toggle(m)} onKeyDown={(e) => { if (e.key === 'Enter') toggle(m); }}
               className="tag p" style={{ textAlign: 'center', cursor: 'pointer', ...(on ? { background: '#1a1a2e', color: '#fff' } : {}) }}>
-              {on ? '\u2611' : '\u2610'} {nm(m)}
+              {on ? '☑' : '☐'} {nm(m)}
             </span>
           );
         })}
