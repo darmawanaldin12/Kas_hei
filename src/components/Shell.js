@@ -22,15 +22,20 @@ export default function Shell({ title, only, children }) {
   const r = useRouter();
   const p = usePathname();
   const [me, setMe] = useState(null);
+  const [avatar, setAvatar] = useState(null);
 
   useEffect(() => {
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) return r.replace('/login');
-      const { data } = await sb.from('profiles').select('id,nama,role,aktif').eq('id', session.user.id).single();
+      const { data } = await sb.from('profiles').select('id,nama,role,aktif,nama_login,foto_path').eq('id', session.user.id).single();
       if (!data || !data.aktif) { await sb.auth.signOut(); return r.replace('/login'); }
       if (only && !only.includes(data.role)) return r.replace('/');
       setMe(data);
+      if (data.foto_path) {
+        const f = await sb.storage.from('profil').download(data.foto_path);
+        if (f.data) setAvatar(URL.createObjectURL(f.data));
+      }
     })();
   }, []);
 
@@ -49,7 +54,11 @@ export default function Shell({ title, only, children }) {
     <div className="app">
       <header>
         <div><span className="tag k">{me.role}</span><h1>{title}</h1></div>
-        <button className="av" title="Keluar" aria-label="Keluar" onClick={async () => { await sb.auth.signOut(); r.replace('/login'); }}>{me.nama[0]}</button>
+        <Link href="/pengaturan" className="av" title="Pengaturan" aria-label="Pengaturan akun" style={avatar ? { padding: 0, overflow: 'hidden' } : undefined}>
+          {avatar
+            ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+            : me.nama[0]}
+        </Link>
       </header>
       <main>{children(me)}</main>
       <nav>{nav.map(([h, i, l]) => <Link key={h} href={h} className={p === h ? 'on' : ''}>{ico(i)}{l}</Link>)}</nav>
