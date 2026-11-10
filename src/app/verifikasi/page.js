@@ -4,6 +4,7 @@ import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
 import Sukses from '../../components/Sukses';
 import { sb, rp, ym, lb } from '../../lib/supabase';
+import { fotoUrl } from '../../lib/foto';
 
 const thn = ym().slice(0, 4);
 const nm = (m) => lb(m) + (m.slice(0, 4) !== thn ? " '" + m.slice(2, 4) : '');
@@ -37,11 +38,7 @@ function Verifikasi() {
     const grup = Object.values(g);
     grup.forEach((x) => x.items.sort((a, b) => a.bulan.localeCompare(b.bulan)));
     await Promise.all(grup.map(async (x) => {
-      x.url = null;
-      if (x.bukti_path) {
-        const s = await sb.storage.from('bukti').createSignedUrl(x.bukti_path, 3600);
-        x.url = s.data?.signedUrl || null;
-      }
+      x.url = await fotoUrl(x.bukti_path);
     }));
     setSel(Object.fromEntries(list.map((x) => [x.id, true])));
     setD(grup);
