@@ -16,6 +16,7 @@ function Verifikasi() {
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [sukses, setSukses] = useState(null);
+  const [zoom, setZoom] = useState(null);
 
   const load = async () => {
     const { data: rows } = await sb.from('iuran')
@@ -47,6 +48,13 @@ function Verifikasi() {
   };
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (!zoom) return;
+    const esc = (e) => { if (e.key === 'Escape') setZoom(null); };
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [zoom]);
+
   async function ubah(x, ids, patch) {
     setBusy(true); setMsg('');
     const { error } = await sb.from('iuran').update(patch).in('id', ids);
@@ -74,6 +82,24 @@ function Verifikasi() {
           tombol={[{ teks: 'Lanjut', klik: () => setSukses(null) }]}
         />
       )}
+      {zoom && (
+        <div
+          onClick={() => setZoom(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,.88)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, cursor: 'zoom-out',
+          }}
+        >
+          <img
+            src={zoom.url} alt={'Bukti ' + zoom.nama}
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }}
+          />
+          <button
+            type="button" className="btn pink s" onClick={() => setZoom(null)}
+            style={{ position: 'absolute', top: 12, right: 12 }}
+          >Tutup</button>
+        </div>
+      )}
       <small>Periksa bukti dari anggota. Kalau satu bukti untuk beberapa bulan, centang bulan yang jumlah transfernya sesuai.</small>
       {msg && <div className="note bad">{msg}</div>}
       {!d.length && <p className="mut">Tidak ada bukti yang menunggu verifikasi.</p>}
@@ -95,13 +121,13 @@ function Verifikasi() {
                     onClick={() => setSel((s) => ({ ...s, [it.id]: !s[it.id] }))}
                     onKeyDown={(e) => { if (e.key === 'Enter') setSel((s) => ({ ...s, [it.id]: !s[it.id] })); }}
                     style={{ cursor: 'pointer', ...(on ? { background: '#1a1a2e', color: '#fff' } : {}) }}>
-                    {on ? '\u2611' : '\u2610'} {nm(it.bulan)} · {rp(it.nominal)}
+                    {on ? '☑' : '☐'} {nm(it.bulan)} · {rp(it.nominal)}
                   </span>
                 );
               })}
             </div>
             {x.url
-              ? <a href={x.url} target="_blank" rel="noreferrer"><img src={x.url} alt={'Bukti ' + x.nama} style={{ width: '100%', borderRadius: 12, marginTop: 10 }} /></a>
+              ? <img src={x.url} alt={'Bukti ' + x.nama} onClick={() => setZoom({ url: x.url, nama: x.nama })} style={{ width: '100%', borderRadius: 12, marginTop: 10, cursor: 'zoom-in' }} />
               : <p className="mut">Foto bukti tidak bisa dimuat.</p>}
             {tolak === x.k ? (
               <>
