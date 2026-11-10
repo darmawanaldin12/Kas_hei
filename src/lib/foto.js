@@ -62,3 +62,30 @@ export async function siapkanFoto(file) {
     return file;
   }
 }
+
+// Foto profil: HEIC diubah ke JPEG, dipotong persegi dari tengah, maksimal 384px.
+// Mengembalikan null kalau foto tidak bisa dibaca.
+export async function siapkanAvatar(file) {
+  try {
+    const b = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    const ext = ((file.name || '').split('.').pop() || '').toLowerCase();
+    let blob = file;
+    if (adaHeic(b, ext, file.type)) {
+      const heic2any = (await import('heic2any')).default;
+      const out = await heic2any({ blob: new Blob([file], { type: 'image/heic' }), toType: 'image/jpeg', quality: 0.9 });
+      blob = Array.isArray(out) ? out[0] : out;
+    }
+    const bmp = await createImageBitmap(blob);
+    const sisi = Math.min(bmp.width, bmp.height);
+    const ukuran = Math.min(384, sisi);
+    const c = document.createElement('canvas');
+    c.width = ukuran;
+    c.height = ukuran;
+    c.getContext('2d').drawImage(bmp, (bmp.width - sisi) / 2, (bmp.height - sisi) / 2, sisi, sisi, 0, 0, ukuran, ukuran);
+    const out = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.85));
+    if (!out) return null;
+    return new File([out], 'profil.jpg', { type: 'image/jpeg' });
+  } catch (e) {
+    return null;
+  }
+}
