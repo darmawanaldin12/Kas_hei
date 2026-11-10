@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
 import { sb, rp, ym, addM, lb } from '../../lib/supabase';
+import { fotoUrl } from '../../lib/foto';
 
 const tgl = (s) => (s ? new Date(s).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' }) + ' WIB' : null);
 
@@ -43,8 +44,8 @@ function Grid() {
     setDet({ ...cell, nama: x.nama });
     if (!cell.bukti_path) return setFoto({ id: cell.id, s: 'tanpa' });
     setFoto({ id: cell.id, s: 'muat' });
-    const r = await sb.storage.from('bukti').createSignedUrl(cell.bukti_path, 3600);
-    setFoto({ id: cell.id, s: r.data?.signedUrl ? 'ok' : 'gagal', url: r.data?.signedUrl });
+    const url = await fotoUrl(cell.bukti_path);
+    setFoto({ id: cell.id, s: url ? 'ok' : 'gagal', url });
   }
 
   const kuning = { background: '#FDE068' };
@@ -120,7 +121,7 @@ function Grid() {
             <div style={{ marginTop: 12 }}>
               <small>Foto bukti</small>
               {!f || f.s === 'muat' ? <Memuat kecil />
-                : f.s === 'ok' ? <a href={f.url} target="_blank" rel="noreferrer"><img src={f.url} alt={'Bukti ' + det.nama} style={{ width: '100%', borderRadius: 12, marginTop: 6 }} /></a>
+                : f.s === 'ok' ? <img src={f.url} alt={'Bukti ' + det.nama} style={{ width: '100%', borderRadius: 12, marginTop: 6 }} />
                 : f.s === 'tanpa' ? <p className="mut">Tidak ada foto (dicatat langsung oleh bendahara).</p>
                 : <p className="mut">Foto bukti hanya bisa dilihat bendahara, ketua, dan pemilik iuran.</p>}
             </div>
