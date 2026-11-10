@@ -23,7 +23,8 @@ export async function POST(req) {
 
   if (!nama) return err('Nama lengkap wajib diisi', 400);
   if (!/^[a-z0-9._-]{3,30}$/.test(namaLogin)) return err('Nama login 3-30 karakter: huruf kecil, angka, titik, strip', 400);
-  if (!emailPengingat.includes('@')) return err('Email untuk pengingat wajib diisi', 400);
+  // Email pengingat boleh kosong; kalau diisi harus berformat email.
+  if (emailPengingat && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailPengingat)) return err('Format email tidak valid', 400);
   if (password.length < 6) return err('Kata sandi minimal 6 karakter', 400);
 
   const { data: ada } = await admin.from('profiles').select('id').eq('nama_login', namaLogin).maybeSingle();
@@ -38,7 +39,7 @@ export async function POST(req) {
   });
   if (error) return err(error.message, 400);
 
-  const upd = { nama_login: namaLogin, email_pengingat: emailPengingat, role };
+  const upd = { nama_login: namaLogin, email_pengingat: emailPengingat || null, role };
   if (mulai) upd.mulai_bulan = mulai;
   const { error: e2 } = await admin.from('profiles').update(upd).eq('id', data.user.id);
   if (e2) {
