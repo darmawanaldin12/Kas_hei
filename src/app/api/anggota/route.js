@@ -27,8 +27,20 @@ export async function POST(req) {
   if (emailPengingat && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailPengingat)) return err('Format email tidak valid', 400);
   if (password.length < 6) return err('Kata sandi minimal 6 karakter', 400);
 
-  const { data: ada } = await admin.from('profiles').select('id').eq('nama_login', namaLogin).maybeSingle();
-  if (ada) return err('Nama login sudah dipakai', 400);
+  const { data: ada } = await admin.from('profiles').select('id,aktif').eq('nama_login', namaLogin).maybeSingle();
+  if (ada && ada.aktif) return err('Nama login sudah dipakai', 400);
+
+  // Nama login ini milik anggota yang sudah dinonaktifkan: aktifkan kembali akunnya
+  // (riwayat iuran lama tetap utuh) dengan data dan kata sandi yang baru.
+  if (ada) {
+    const { error: e0 } = await admin.auth.admin.updateUserById(ada.id, { password });
+    if (e0) return err('Gagal mengaktifkan kembali: ' + e0.message, 500);
+    const upd0 = { nama, aktif: true, role, email_pengingat: emailPengingat || null };
+    if (mulai) upd0.mulai_bulan = mulai;
+    const { error: e1 } = await admin.from('profiles').update(upd0).eq('id', ada.id);
+    if (e1) return err('Gagal menyimpan profil: ' + e1.message, 500);
+    return Response.json({ ok: true, diaktifkan_kembali: true });
+  }
 
   // Email akun bersifat internal (tidak pernah dikirimi email); email asli hanya untuk pengingat.
   const { data, error } = await admin.auth.admin.createUser({
