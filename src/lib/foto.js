@@ -36,7 +36,7 @@ export async function fotoUrl(path) {
   }
 }
 
-// Dipanggil sebelum unggah: HEIC diubah ke JPEG, sisi terpanjang dibatasi 2400px, kualitas 85%.
+// Dipanggil sebelum unggah: HEIC diubah ke JPEG, sisi terpanjang dibatasi 1600px, kualitas 85%.
 // Kalau gagal di tengah jalan, file asli dikembalikan apa adanya.
 export async function siapkanFoto(file) {
   try {
@@ -49,7 +49,7 @@ export async function siapkanFoto(file) {
       blob = Array.isArray(out) ? out[0] : out;
     }
     const bmp = await createImageBitmap(blob);
-    const sk = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+    const sk = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
     const c = document.createElement('canvas');
     c.width = Math.max(1, Math.round(bmp.width * sk));
     c.height = Math.max(1, Math.round(bmp.height * sk));
