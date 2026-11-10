@@ -10,8 +10,9 @@ function Anggota({ me }) {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState(kosong);
   const [msg, setMsg] = useState('');
+  const [uji, setUji] = useState({ id: '', t: '', bad: false });
 
-  const load = () => sb.from('profiles').select('id,nama,nama_login,role').eq('aktif', true).order('nama').then((x) => setL(x.data || []));
+  const load = () => sb.from('profiles').select('id,nama,nama_login,role,email_pengingat').eq('aktif', true).order('nama').then((x) => setL(x.data || []));
   useEffect(() => { load(); }, []);
 
   async function tambah() {
@@ -26,6 +27,14 @@ function Anggota({ me }) {
   async function hapus(id) {
     if (!confirm('Nonaktifkan anggota ini? Riwayat tetap utuh.')) return;
     await sb.from('profiles').update({ aktif: false }).eq('id', id); load();
+  }
+  async function ujiEmail(x) {
+    setUji({ id: x.id, t: 'Mengirim…', bad: false });
+    const { data: { session } } = await sb.auth.getSession();
+    const r = await fetch('/api/pengingat-uji', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ anggota_id: x.id }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return setUji({ id: x.id, t: j.error || 'Gagal mengirim', bad: true });
+    setUji({ id: x.id, t: 'Terkirim ke ' + j.ke + (j.uji ? ' (email uji, tidak ada tunggakan)' : ' (' + j.bulan + ' bulan tunggakan)'), bad: false });
   }
   const set = (k, v) => setF({ ...f, [k]: v });
 
@@ -46,14 +55,18 @@ function Anggota({ me }) {
       )}
       <small className="h">{l.length} anggota</small>
       {l.map((x) => (
-        <div className="card row" key={x.id}>
-          <span className="av s">{x.nama[0]}</span>
-          <div style={{ flex: 1 }}>
-            <b style={{ display: 'block' }}>{x.nama}</b>
-            <span className={'tag ' + (x.role === 'ketua' ? 'y' : x.role === 'bendahara' ? 'p' : '')}>{x.role}</span>
-            {x.nama_login && <small className="mut" style={{ marginLeft: 8 }}>@{x.nama_login}</small>}
+        <div className="card" key={x.id}>
+          <div className="row">
+            <span className="av s">{x.nama[0]}</span>
+            <div style={{ flex: 1 }}>
+              <b style={{ display: 'block' }}>{x.nama}</b>
+              <span className={'tag ' + (x.role === 'ketua' ? 'y' : x.role === 'bendahara' ? 'p' : '')}>{x.role}</span>
+              {x.nama_login && <small className="mut" style={{ marginLeft: 8 }}>@{x.nama_login}</small>}
+            </div>
+            {x.email_pengingat && <button className="btn y s" disabled={uji.id === x.id && uji.t === 'Mengirim…'} onClick={() => ujiEmail(x)}>Uji email</button>}
+            {x.id !== me.id && <button className="btn pink s" onClick={() => hapus(x.id)}>Hapus</button>}
           </div>
-          {x.id !== me.id && <button className="btn pink s" onClick={() => hapus(x.id)}>Hapus</button>}
+          {uji.id === x.id && uji.t && <div className={'note' + (uji.bad ? ' bad' : '')}>{uji.t}</div>}
         </div>
       ))}
     </>
