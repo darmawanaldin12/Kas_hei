@@ -27,7 +27,7 @@ function Grid() {
         sb.from('profiles').select('id,nama,aktif').order('nama'),
         sb.from('iuran')
           .select('id,anggota_id,bulan,status,nominal,metode,bukti_path,dikirim_at,diverifikasi_at,diverifikasi_oleh,catatan')
-          .in('status', ['lunas', 'menunggu_verifikasi']).gte('bulan', ms[0]).lte('bulan', end),
+          .in('status', ['lunas', 'menunggu_verifikasi', 'ditolak']).gte('bulan', ms[0]).lte('bulan', end),
       ]);
       const all = p.data || [];
       setNames(Object.fromEntries(all.map((x) => [x.id, x.nama])));
@@ -49,6 +49,7 @@ function Grid() {
   }
 
   const kuning = { background: '#FDE068' };
+  const merah = { background: '#E5484D', color: '#fff' };
   const f = det && foto && foto.id === det.id ? foto : null;
 
   return (
@@ -59,12 +60,13 @@ function Grid() {
         <button className="btn y" disabled={off >= 0} onClick={() => setOff(off + 1)}>&gt;</button>
       </div>
       <div className="spread">
-        <span><span className="tag g">Lunas ✓</span> <span className="tag p">Belum ✕</span> <span className="tag" style={kuning}>Menunggu …</span></span>
+        <span><span className="tag g">Lunas ✓</span> <span className="tag p">Belum ✕</span> <span className="tag" style={kuning}>Menunggu …</span> <span className="tag" style={merah}>Ditolak !</span></span>
       </div>
-      <small>{nm(ms[0])} → {nm(end)} {end.slice(0, 4)} · Ketuk bulan berstatus ✓ atau … untuk melihat rincian</small>
+      <small>{nm(ms[0])} → {nm(end)} {end.slice(0, 4)} · Ketuk bulan berstatus ✓, … atau ! untuk melihat rincian</small>
       {!rows ? <Memuat /> : rows.map((x) => {
         const belum = ms.filter((_, i) => !x.c[i]);
         const tunggu = ms.filter((_, i) => x.c[i] && x.c[i].status === 'menunggu_verifikasi');
+        const tolak = ms.filter((_, i) => x.c[i] && x.c[i].status === 'ditolak');
         return (
           <div className="card" key={x.id}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -72,8 +74,9 @@ function Grid() {
               <div>
                 <b style={{ display: 'block' }}>{x.nama}</b>
                 <small>
-                  {belum.length ? 'Belum bayar: ' + belum.map(nm).join(', ') : 'Semua lunas ✓'}
-                  {tunggu.length ? ' · Menunggu verifikasi: ' + tunggu.map(nm).join(', ') : ''}
+                  {belum.length ? 'Belum bayar: ' + belum.map(nm).join(', ') : (tolak.length ? '' : 'Semua lunas ✓')}
+                  {tunggu.length ? (belum.length ? ' · ' : '') + 'Menunggu verifikasi: ' + tunggu.map(nm).join(', ') : ''}
+                  {tolak.length ? (belum.length || tunggu.length ? ' · ' : '') + 'Ditolak: ' + tolak.map(nm).join(', ') : ''}
                 </small>
               </div>
             </div>
@@ -81,7 +84,8 @@ function Grid() {
               {ms.map((m, i) => {
                 const cell = x.c[i];
                 const lunas = cell && cell.status === 'lunas';
-                const tg = cell && !lunas;
+                const ditolak = cell && cell.status === 'ditolak';
+                const tg = cell && !lunas && !ditolak;
                 return (
                   <span
                     key={m}
@@ -90,9 +94,9 @@ function Grid() {
                     onClick={cell ? () => buka(x, cell) : undefined}
                     onKeyDown={cell ? (e) => { if (e.key === 'Enter') buka(x, cell); } : undefined}
                     className={'tag ' + (lunas ? 'g' : !cell ? 'p' : '')}
-                    style={{ textAlign: 'center', cursor: cell ? 'pointer' : 'default', ...(tg ? kuning : {}) }}
+                    style={{ textAlign: 'center', cursor: cell ? 'pointer' : 'default', ...(tg ? kuning : {}), ...(ditolak ? merah : {}) }}
                   >
-                    {nm(m)} {lunas ? '✓' : !cell ? '✕' : '…'}
+                    {nm(m)} {lunas ? '✓' : ditolak ? '!' : !cell ? '✕' : '…'}
                   </span>
                 );
               })}
@@ -107,17 +111,21 @@ function Grid() {
             <b style={{ display: 'block', fontSize: 18 }}>{det.nama}</b>
             <small>Iuran {lb(det.bulan)} {det.bulan.slice(0, 4)}</small>
             <div style={{ marginTop: 8 }}>
-              {det.status === 'lunas' ? <span className="tag g">Lunas ✓</span> : <span className="tag" style={kuning}>Menunggu verifikasi …</span>}
+              {det.status === 'lunas' ? <span className="tag g">Lunas ✓</span>
+                : det.status === 'ditolak' ? <span className="tag" style={merah}>Ditolak !</span>
+                : <span className="tag" style={kuning}>Menunggu verifikasi …</span>}
             </div>
             <Info k="Nominal" v={rp(det.nominal) + (det.metode ? ' · ' + det.metode : '')} />
             <Info k="Diinput" v={tgl(det.dikirim_at) || (det.bukti_path ? '-' : 'Dicatat langsung oleh bendahara')} />
             <Info
-              k="Disetujui"
+              k={det.status === 'ditolak' ? 'Ditolak' : 'Disetujui'}
               v={det.status === 'lunas'
                 ? (tgl(det.diverifikasi_at) || '-') + (det.diverifikasi_oleh && names[det.diverifikasi_oleh] ? ' · oleh ' + names[det.diverifikasi_oleh] : '')
-                : 'Belum, menunggu bendahara'}
+                : det.status === 'ditolak'
+                  ? (tgl(det.diverifikasi_at) || 'Oleh bendahara') + (det.diverifikasi_oleh && names[det.diverifikasi_oleh] ? ' · oleh ' + names[det.diverifikasi_oleh] : '')
+                  : 'Belum, menunggu bendahara'}
             />
-            {det.catatan && <Info k="Catatan" v={det.catatan} />}
+            {det.catatan && <Info k={det.status === 'ditolak' ? 'Alasan penolakan' : 'Catatan'} v={det.catatan} />}
             <div style={{ marginTop: 12 }}>
               <small>Foto bukti</small>
               {!f || f.s === 'muat' ? <Memuat kecil />
