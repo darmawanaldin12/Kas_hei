@@ -11,6 +11,14 @@ const keEmail = (v) => {
   return s.includes('@') ? s : s + '@kas.internal';
 };
 
+const Mata = ({ coret }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+    <circle cx="12" cy="12" r="3" />
+    {coret && <path d="M4 4l16 16" />}
+  </svg>
+);
+
 export default function Login() {
   const r = useRouter();
   const [e, setE] = useState('');
@@ -37,11 +45,11 @@ export default function Login() {
       <form className="card" onSubmit={masuk}>
         <label><small>Nama</small><input className="in" required autoCapitalize="none" autoCorrect="off" autoComplete="username" value={e} onChange={(x) => setE(x.target.value)} placeholder="mis. budi" /></label>
         <label><small>Kata sandi</small>
-          <div style={{ position: 'relative' }}>
-            <input className="in" type={lihat ? 'text' : 'password'} required autoComplete="current-password" autoCapitalize="none" autoCorrect="off" value={p} onChange={(x) => setP(x.target.value)} placeholder="••••••••" style={{ paddingRight: 96 }} />
+          <div style={{ position: 'relative', margin: '6px 0 14px' }}>
+            <input className="in" type={lihat ? 'text' : 'password'} required autoComplete="current-password" autoCapitalize="none" autoCorrect="off" value={p} onChange={(x) => setP(x.target.value)} placeholder="••••••••" style={{ margin: 0, paddingRight: 56 }} />
             <button type="button" onClick={() => setLihat(!lihat)} aria-label={lihat ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'} aria-pressed={lihat}
-              style={{ position: 'absolute', right: 8, top: 14, height: 36, minWidth: 80, border: '3px solid var(--ink)', borderRadius: 999, background: 'var(--sun)', fontFamily: 'inherit', fontSize: 13, fontWeight: 800, color: 'var(--ink)', cursor: 'pointer' }}>
-              {lihat ? 'Sembunyi' : 'Lihat'}
+              style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--ink)', cursor: 'pointer', padding: 0 }}>
+              <Mata coret={lihat} />
             </button>
           </div>
         </label>
