@@ -48,3 +48,30 @@ export function buatEmail({ nama, bulan, nominal, uji }) {
       `<hr style="border:none;border-top:1px solid #ddd"><p style="color:#666;font-size:12px">${esc(ALASAN)}</p>`,
   };
 }
+
+// akun: [{ nama, namaLogin, sandi }]. Satu email bisa memuat lebih dari satu akun kalau emailnya dipakai bersama.
+export function buatEmailSandi({ akun }) {
+  const baris = akun.map((a) => `Nama: ${a.nama}\nNama login: ${a.namaLogin}\nKata sandi sementara: ${a.sandi}`).join('\n\n');
+  const kotak = akun
+    .map(
+      (a) =>
+        `<p style="margin:0 0 4px">${esc(a.nama)}</p>` +
+        `<p style="margin:0 0 4px">Nama login: <b>${esc(a.namaLogin)}</b></p>` +
+        `<p style="margin:0 0 14px">Kata sandi sementara: <b style="font-family:monospace;font-size:18px;letter-spacing:1px">${esc(a.sandi)}</b></p>`
+    )
+    .join('');
+  return {
+    subject: 'Kata sandi sementara kas kantor',
+    text:
+      `Halo,\n\nKamu atau seseorang meminta kata sandi baru untuk aplikasi kas kantor. Ini data masuk yang baru:\n\n${baris}\n\n` +
+      `Masuk di ${APP_URL}, lalu segera ganti kata sandi di menu Pengaturan (ketuk lingkaran di pojok kanan atas).\n\n` +
+      `Kalau kamu tidak merasa memintanya, abaikan email ini lalu ganti kata sandi setelah masuk. Kata sandi lama sudah tidak berlaku.\n\n` +
+      `Salam,\nPengurus Kas Kantor\n\n--\n${ALASAN}`,
+    html:
+      `<p>Halo,</p><p>Kamu atau seseorang meminta kata sandi baru untuk aplikasi kas kantor. Ini data masuk yang baru:</p>${kotak}` +
+      `<p>Masuk di <a href="${APP_URL}">${APP_URL}</a>, lalu segera ganti kata sandi di menu Pengaturan (ketuk lingkaran di pojok kanan atas).</p>` +
+      `<p style="color:#666">Kalau kamu tidak merasa memintanya, abaikan email ini lalu ganti kata sandi setelah masuk. Kata sandi lama sudah tidak berlaku.</p>` +
+      `<p>Salam,<br>Pengurus Kas Kantor</p>` +
+      `<hr style="border:none;border-top:1px solid #ddd"><p style="color:#666;font-size:12px">${esc(ALASAN)}</p>`,
+  };
+}
