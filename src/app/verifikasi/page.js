@@ -9,7 +9,7 @@ import { fotoUrl } from '../../lib/foto';
 const thn = ym().slice(0, 4);
 const nm = (m) => lb(m) + (m.slice(0, 4) !== thn ? " '" + m.slice(2, 4) : '');
 
-function Verifikasi() {
+function Verifikasi({ me }) {
   const [d, setD] = useState(null);
   const [sel, setSel] = useState({});
   const [tolak, setTolak] = useState(null);
@@ -54,7 +54,8 @@ function Verifikasi() {
 
   async function ubah(x, ids, patch) {
     setBusy(true); setMsg('');
-    const { error } = await sb.from('iuran').update(patch).in('id', ids);
+    const now = new Date().toISOString();
+    const { error } = await sb.from('iuran').update({ ...patch, diverifikasi_at: now, diverifikasi_oleh: me.id }).in('id', ids);
     setBusy(false);
     if (error) return setMsg(error.message);
     const dipilih = x.items.filter((it) => ids.includes(it.id));
@@ -149,5 +150,5 @@ function Verifikasi() {
 }
 
 export default function Page() {
-  return <Shell title="Verifikasi" only={['bendahara']}>{() => <Verifikasi />}</Shell>;
+  return <Shell title="Verifikasi" only={['bendahara']}>{(me) => <Verifikasi me={me} />}</Shell>;
 }
