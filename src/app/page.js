@@ -3,49 +3,56 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Shell from '../components/Shell';
 import Memuat from '../components/Memuat';
-import { sb, rp, ym, lb, addM } from '../lib/supabase';
+import { sb, rp, ym, lb } from '../lib/supabase';
 
 function Home({ me }) {
   const [d, setD] = useState(null);
+
   useEffect(() => {
     (async () => {
       const b = ym();
-      const [s, p, l, t, my, trans] = await Promise.all([
+      const [s, p, set, iur, t, my, tunggu] = await Promise.all([
         sb.from('kas_saldo').select('*').single(),
         sb.from('profiles').select('id', { count: 'exact', head: true }).eq('aktif', true),
-        sb.from('iuran').select('id,nominal', { count: 'exact' }).eq('bulan', b).eq('status', 'lunas'),
+        sb.from('pengaturan').select('iuran_nominal').single(),
+        sb.from('iuran').select('anggota_id,status,nominal').eq('bulan', b),
         sb.from('tunggakan').select('anggota_id,nama').eq('bulan', b),
-        sb.from('iuran').select('id,bulan,status,catatan,diverifikasi_at,nominal').eq('anggota_id', me.id).in('status', ['ditolak', 'lunas']).order('diverifikasi_at', { ascending: false }).limit(3),
-        sb.from('kas_transaksi').select('jenis,jumlah').order('tanggal', { ascending: false }).limit(6),
+        sb.from('iuran').select('id,bulan,status,catatan,nominal').eq('anggota_id', me.id)
+          .in('status', ['ditolak', 'lunas']).order('diverifikasi_at', { ascending: false }).limit(3),
+        sb.from('iuran').select('id', { count: 'exact', head: true }).eq('status', 'menunggu_verifikasi'),
       ]);
-      
-      const lunasCount = l.count || 0;
-      const totalLunas = (l.data || []).reduce((a, x) => a + Number(x.nominal || 0), 0);
-      const tunggakanData = t.data || [];
-      const tunggakanNominal = tunggakanData.length * (tunggakanData[0]?.nominal || 20000); // estimasi
 
-      setD({ 
-        s: s.data || {}, 
-        n: p.count || 0, 
-        l: lunasCount, 
-        t: tunggakanData, 
+      const nom = set.data?.iuran_nominal || 20000;
+      const bulanIni = iur.data || [];
+      const lunas = bulanIni.filter((x) => x.status === 'lunas');
+      const nunggu = bulanIni.filter((x) => x.status === 'menunggu_verifikasi');
+      const n = p.count || 0;
+      const belum = (t.data || []).length;
+
+      setD({
+        s: s.data || {},
+        n,
+        nom,
+        lunas: lunas.length,
+        nunggu: nunggu.length,
+        belum: belum,
+        tunggakan: belum * nom,
+        daftar: t.data || [],
         my: my.data || [],
-        trans: trans.data || [],
-        totalLunas,
-        tunggakanNominal
+        verifikasi: tunggu.count || 0,
       });
     })();
   }, []);
 
   if (!d) return <Memuat />;
-  const pct = d.n ? Math.round((d.l / d.n) * 100) : 0;
-  const belumBayar = d.t.find(x => x.anggota_id === me.id);
+  const pct = d.n ? Math.round((d.lunas / d.n) * 100) : 0;
+  const sayaBelum = d.daftar.some((x) => x.anggota_id === me.id);
 
   return (
     <>
-      <div className="hero-salam" style={{marginBottom: 12}}>
-        <h2 style={{fontSize: 20, fontWeight: 800}}>Halo, {me.nama.split(' ')[0]}</h2>
-        <small style={{color: '#444'}}>Periode {lb(ym())} {ym().slice(0,4)}</small>
+      <div className="salam">
+        <h2>Halo, {me.nama.split(' ')[0]}</h2>
+        <small>Periode {lb(ym())} {ym().slice(0, 4)}</small>
       </div>
 
       <div className="card hero">
@@ -57,44 +64,75 @@ function Home({ me }) {
         </div>
       </div>
 
-      {me.role === 'bendahara' && (
-        <a className="tugas" href="/verifikasi" style={{display:'flex', alignItems:'center', gap:10, border:'3px solid var(--ink)', borderRadius:18, boxShadow:'4px 4px 0 var(--ink)', padding:'12px 14px', marginBottom:14, textDecoration:'none', color:'var(--ink)', background:'#fff'}}>
-          <div style={{flex:1}}><b>Bukti menunggu verifikasi</b><small>Periksa bukti yang masuk</small></div>
-          <span className="pipa" style={{fontSize:12, fontWeight:800, border:'3px solid var(--ink)', borderRadius:999, padding:'6px 12px', background:'#fff'}}>Periksa</span>
-        </a>
+      {me.role === 'bendahara' && d.verifikasi > 0 && (
+        <Link className="tugas" href="/verifikasi">
+          <div>
+            <b>{d.verifikasi} bukti menunggu verifikasi</b>
+            <small>Periksa bukti yang baru masuk</small>
+          </div>
+          <span className="pipa">Periksa</span>
+        </Link>
       )}
 
-      {belumBayar && (
-        <a className="tugas" href="/bukti" style={{display:'flex', alignItems:'center', gap:10, border:'3px solid var(--ink)', borderRadius:18, boxShadow:'4px 4px 0 var(--ink)', padding:'12px 14px', marginBottom:14, textDecoration:'none', color:'var(--ink)', background:'var(--sun)'}}>
-          <div style={{flex:1}}><b>Kamu belum bayar {lb(ym())}</b><small>Iuran Rp 20.000</small></div>
-          <span className="pipa" style={{fontSize:12, fontWeight:800, border:'3px solid var(--ink)', borderRadius:999, padding:'6px 12px', background:'#fff'}}>Bayar</span>
-        </a>
+      {(me.role === 'anggota' || me.role === 'ketua') && sayaBelum && (
+        <Link className="tugas y" href="/bukti">
+          <div>
+            <b>Kamu belum bayar {lb(ym())}</b>
+            <small>Iuran {rp(d.nom)} · jatuh tempo bulan ini</small>
+          </div>
+          <span className="pipa">Bayar</span>
+        </Link>
       )}
 
-      <div className="mini-stats" style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:14}}>
-        <div className="stat-box" style={{border:'3px solid var(--ink)', borderRadius:16, background:'#fff', padding:10, textAlign:'center', boxShadow:'3px 3px 0 var(--ink)'}}><small>Anggota</small><b>{d.n}</b></div>
-        <div className="stat-box" style={{border:'3px solid var(--ink)', borderRadius:16, background:'#E8F8F0', padding:10, textAlign:'center', boxShadow:'3px 3px 0 var(--ink)'}}><small>Lunas</small><b style={{color:'#0a6b32'}}>{d.l}</b></div>
-        <div className="stat-box" style={{border:'3px solid var(--ink)', borderRadius:16, background:'#FFF0F0', padding:10, textAlign:'center', boxShadow:'3px 3px 0 var(--ink)'}}><small>Tunggakan</small><b style={{color:'#b3123f'}}>{rp(d.tunggakanNominal)}</b></div>
+      <div className="stats">
+        <div className="stat"><small>Anggota</small><b>{d.n}</b></div>
+        <div className="stat g"><small>Lunas</small><b>{d.lunas}</b></div>
+        <div className="stat p"><small>Tunggakan</small><b>{rp(d.tunggakan)}</b></div>
       </div>
 
       <div className="card">
-        <div className="spread"><small>Target Iuran {lb(ym())}</small><b>{d.l} / {d.n} Lunas ({pct}%)</b></div>
+        <div className="spread">
+          <small>Target iuran {lb(ym())}</small>
+          <b>{d.lunas} / {d.n} lunas ({pct}%)</b>
+        </div>
         <div className="bar"><i style={{ width: pct + '%' }} /></div>
+        {d.nunggu > 0 && (
+          <small style={{ display: 'block', marginTop: 8 }}>
+            {d.nunggu} bukti sedang menunggu verifikasi
+          </small>
+        )}
       </div>
 
-      <small className="h">{me.role === 'anggota' ? 'Riwayat Pribadi' : 'Belum Bayar (' + d.t.length + ')'}</small>
-      {me.role === 'anggota' ? d.my.map(x => (
-        <div className="card row" key={x.id} style={{display:'flex', alignItems:'center', gap:10, marginBottom:10}}>
-          <span className={'av s ' + (x.status === 'lunas' ? 'g' : 'pink')} style={{background: x.status === 'lunas' ? 'var(--mint)' : 'var(--peach)'}}>{x.status === 'lunas' ? '✓' : '!'}</span>
-          <div style={{flex:1}}><b>Iuran {lb(x.bulan)}</b><small>{x.status === 'lunas' ? 'Disetujui' : 'Ditolak: ' + x.catatan}</small></div>
-          <b>{rp(x.nominal)}</b>
-        </div>
-      )) : d.t.map((x) => (
-        <div className="card row" key={x.anggota_id} style={{display:'flex', alignItems:'center', gap:10, marginBottom:10}}>
-          <span className="av s">{x.nama[0]}</span><b style={{flex:1}}>{x.nama}</b>
-          <Link className="btn pink s" href="/catat">Catat</Link>
-        </div>
-      ))}
+      {me.role === 'anggota' ? (
+        <>
+          <small className="h">Riwayat pribadi</small>
+          {!d.my.length && <p className="mut">Belum ada riwayat pembayaran.</p>}
+          {d.my.map((x) => (
+            <div className={'riwayat' + (x.status === 'ditolak' ? ' bad' : '')} key={x.id}>
+              <span className="av s" style={{ background: x.status === 'lunas' ? 'var(--mint)' : 'var(--peach)' }}>
+                {x.status === 'lunas' ? '✓' : '!'}
+              </span>
+              <div className="isi">
+                <b>Iuran {lb(x.bulan)} {x.bulan.slice(0, 4)}</b>
+                <small>{x.status === 'lunas' ? 'Disetujui' : 'Ditolak' + (x.catatan ? ': ' + x.catatan : '')}</small>
+              </div>
+              <span className="nominal">{rp(x.nominal)}</span>
+            </div>
+          ))}
+        </>
+      ) : (
+        <>
+          <small className="h">Belum bayar ({d.belum})</small>
+          {!d.belum && <p className="mut">Semua anggota sudah lunas bulan ini.</p>}
+          {d.daftar.map((x) => (
+            <div className="card row" key={x.anggota_id}>
+              <span className="av s">{x.nama[0]}</span>
+              <b>{x.nama}</b>
+              <Link className="btn pink s" href="/catat">Catat</Link>
+            </div>
+          ))}
+        </>
+      )}
     </>
   );
 }
