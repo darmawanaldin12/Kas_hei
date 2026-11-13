@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { sb } from '../lib/supabase';
 import Memuat from './Memuat';
 
+const STORAGE_KEY = 'notif_dibaca_at';
+
 const IKON = {
   home: 'M3 11 12 3l9 8M5 10v10h14V10',
   grid: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
@@ -23,6 +25,30 @@ export default function Shell({ title, only, children }) {
   const p = usePathname();
   const [me, setMe] = useState(null);
   const [avatar, setAvatar] = useState(null);
+  const [badge, setBadge] = useState(false);
+
+  // Hitung notif belum baca
+  const hitungBadge = async (profile) => {
+    const dibacaAt = localStorage.getItem(STORAGE_KEY);
+    const sejak = dibacaAt ? new Date(dibacaAt).toISOString() : new Date(0).toISOString();
+
+    if (profile.role === 'anggota' || profile.role === 'ketua') {
+      const { count } = await sb.from('iuran')
+        .select('id', { count: 'exact', head: true })
+        .eq('anggota_id', profile.id)
+        .in('status', ['ditolak', 'lunas'])
+        .gt('diverifikasi_at', sejak);
+      if (count > 0) { setBadge(true); return; }
+    }
+    if (profile.role === 'bendahara' || profile.role === 'ketua') {
+      const { count } = await sb.from('iuran')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'menunggu_verifikasi')
+        .gt('dikirim_at', sejak);
+      if (count > 0) { setBadge(true); return; }
+    }
+    setBadge(false);
+  };
 
   useEffect(() => {
     (async () => {
@@ -32,6 +58,9 @@ export default function Shell({ title, only, children }) {
       if (!data || !data.aktif) { await sb.auth.signOut(); return r.replace('/login'); }
       if (only && !only.includes(data.role)) return r.replace('/');
       setMe(data);
+      hitungBadge(data);
+      window.addEventListener('notif-dibaca', () => setBadge(false));
+
       if (data.foto_path) {
         const f = await sb.storage.from('profil').download(data.foto_path);
         if (f.data) setAvatar(URL.createObjectURL(f.data));
@@ -58,6 +87,10 @@ export default function Shell({ title, only, children }) {
           {avatar
             ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
             : me.nama[0]}
+        </Link>
+        <Link href="/notifikasi" className="av s" style={{ position: 'relative', background: 'var(--sun)', marginLeft: 10 }}>
+          🔔
+          {badge && <span style={{ position: 'absolute', top: -4, right: -4, width: 12, height: 12, background: '#E5484D', borderRadius: '50%', border: '2px solid #fff' }} />}
         </Link>
       </header>
       <main>{children(me)}</main>

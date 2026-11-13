@@ -13,6 +13,7 @@ function Bukti({ me }) {
   const ms = [-5, -4, -3, -2, -1, 0, 1, 2].map((i) => addM(b, i));
   const nm = (m) => lb(m) + (m.slice(0, 4) !== b.slice(0, 4) ? " '" + m.slice(2, 4) : '');
   const kuning = { background: '#FDE068' };
+  const tgl = (s) => s ? new Date(s).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' }) + ' WIB' : null;
   const [nom, setNom] = useState(20000);
   const [st, setSt] = useState(null);
   const [pilih, setPilih] = useState([]);
@@ -27,7 +28,7 @@ function Bukti({ me }) {
   const load = async () => {
     const [s, i] = await Promise.all([
       sb.from('pengaturan').select('iuran_nominal').single(),
-      sb.from('iuran').select('bulan,status,catatan').eq('anggota_id', me.id).gte('bulan', ms[0]).lte('bulan', ms[ms.length - 1]),
+      sb.from('iuran').select('bulan,status,catatan,diverifikasi_at').eq('anggota_id', me.id).gte('bulan', ms[0]).lte('bulan', ms[ms.length - 1]),
     ]);
     const n = s.data?.iuran_nominal || 20000;
     setNom(n);
@@ -121,7 +122,7 @@ function Bukti({ me }) {
         })}
       </div>
       <small style={{ display: 'block', marginTop: 6 }}>✓ lunas · … menunggu verifikasi · ☐ belum, bisa dipilih</small>
-      {ditolak.map((x) => <div className="note bad" key={x.bulan}>Ditolak {nm(x.bulan)}: {x.catatan}</div>)}
+      {ditolak.map((x) => <div className="note bad" key={x.bulan}>Ditolak {nm(x.bulan)}{x.diverifikasi_at ? ' · ' + tgl(x.diverifikasi_at) : ''}: {x.catatan}</div>)}
 
       <label style={{ display: 'block', marginTop: 12 }}><small>Total yang ditransfer</small>
         <input className="in" inputMode="numeric" placeholder="Rp 0"
