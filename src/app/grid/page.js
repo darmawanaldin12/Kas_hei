@@ -17,6 +17,7 @@ function Grid() {
   const [names, setNames] = useState({});
   const [det, setDet] = useState(null);
   const [foto, setFoto] = useState(null);
+  const [member, setMember] = useState(null);
   const end = addM(ym(), off);
   const ms = [5, 4, 3, 2, 1, 0].map((i) => addM(end, -i));
   const nm = (m) => lb(m) + (m.slice(0, 4) !== end.slice(0, 4) ? " '" + m.slice(2, 4) : '');
@@ -48,6 +49,22 @@ function Grid() {
     setFoto({ id: cell.id, s: url ? 'ok' : 'gagal', url });
   }
 
+  function bukaAnggota(x) {
+    setMember({
+      nama: x.nama,
+      bulan: ms.map((m, i) => {
+        const cell = x.c[i];
+        return {
+          bulan: m,
+          label: nm(m),
+          status: cell ? cell.status : 'belum',
+          nominal: cell?.nominal || null,
+          metode: cell?.metode || null,
+        };
+      }),
+    });
+  }
+
   const kuning = { background: '#FDE068' };
   const merah = { background: '#E5484D', color: '#fff' };
   const f = det && foto && foto.id === det.id ? foto : null;
@@ -62,14 +79,20 @@ function Grid() {
       <div className="spread">
         <span><span className="tag g">Lunas ✓</span> <span className="tag p">Belum ✕</span> <span className="tag" style={kuning}>Menunggu …</span> <span className="tag" style={merah}>Ditolak !</span></span>
       </div>
-      <small>{nm(ms[0])} → {nm(end)} {end.slice(0, 4)} · Ketuk bulan berstatus ✓, … atau ! untuk melihat rincian</small>
+      <small>{nm(ms[0])} → {nm(end)} {end.slice(0, 4)} · Ketuk nama untuk rincian anggota, ketuk bulan untuk detail</small>
       {!rows ? <Memuat /> : rows.map((x) => {
         const belum = ms.filter((_, i) => !x.c[i]);
         const tunggu = ms.filter((_, i) => x.c[i] && x.c[i].status === 'menunggu_verifikasi');
         const tolak = ms.filter((_, i) => x.c[i] && x.c[i].status === 'ditolak');
         return (
           <div className="card" key={x.id}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+              role="button"
+              tabIndex={0}
+              onClick={() => bukaAnggota(x)}
+              onKeyDown={(e) => { if (e.key === 'Enter') bukaAnggota(x); }}
+            >
               <span className="av s">{x.nama[0]}</span>
               <div>
                 <b style={{ display: 'block' }}>{x.nama}</b>
@@ -134,6 +157,40 @@ function Grid() {
                 : <p className="mut">Foto bukti hanya bisa dilihat bendahara, ketua, dan pemilik iuran.</p>}
             </div>
             <button className="btn y s" style={{ marginTop: 14 }} onClick={() => setDet(null)}>Tutup</button>
+          </div>
+        </div>
+      )}
+
+      {member && (
+        <div onClick={() => setMember(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,43,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
+          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', margin: 0 }}>
+            <b style={{ display: 'block', fontSize: 18 }}>{member.nama}</b>
+            <small>Rincian iuran {nm(ms[0])} — {nm(end)} {end.slice(0, 4)}</small>
+            <div style={{ marginTop: 14 }}>
+              {member.bulan.map((b) => {
+                const lunas = b.status === 'lunas';
+                const ditolak = b.status === 'ditolak';
+                const tunggu = b.status === 'menunggu_verifikasi';
+                const bg = lunas ? 'var(--mint)' : ditolak ? '#E5484D' : tunggu ? '#FDE068' : 'var(--peach)';
+                const color = ditolak ? '#fff' : 'var(--ink)';
+                const label = lunas ? 'Lunas' : ditolak ? 'Ditolak' : tunggu ? 'Menunggu' : 'Belum';
+                return (
+                  <div key={b.bulan} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '2px solid #eee' }}>
+                    <div>
+                      <b style={{ display: 'block', fontSize: 15 }}>{b.label} {b.bulan.slice(0, 4)}</b>
+                      {b.nominal && <small>{rp(b.nominal)}{b.metode ? ' · ' + b.metode : ''}</small>}
+                    </div>
+                    <span className="tag" style={{ background: bg, color, fontSize: 11 }}>{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <small>
+                {member.bulan.filter((b) => b.status === 'lunas').length} / {member.bulan.length} lunas
+              </small>
+              <button className="btn y s" onClick={() => setMember(null)}>Tutup</button>
+            </div>
           </div>
         </div>
       )}

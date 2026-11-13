@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
 import { sb, lb, rp } from '../../lib/supabase';
+import { fotoUrl } from '../../lib/foto';
 
 const tgl = (s) =>
   s
@@ -27,9 +28,50 @@ function waktuRelatif(s) {
   return d + ' hari lalu';
 }
 
+function Detail({ x, onClose }) {
+  const [foto, setFoto] = useState(null);
+
+  useEffect(() => {
+    if (!x) return;
+    if (!x.bukti_path) { setFoto({ s: 'tanpa' }); return; }
+    setFoto({ s: 'muat' });
+    fotoUrl(x.bukti_path).then((url) => {
+      setFoto({ s: url ? 'ok' : 'gagal', url });
+    });
+  }, [x]);
+
+  if (!x) return null;
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,43,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
+      <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', margin: 0 }}>
+        <b style={{ display: 'block', fontSize: 18 }}>{x.nama || '-'}</b>
+        <small>Iuran {lb(x.bulan)} {x.bulan.slice(0, 4)}</small>
+        <div style={{ marginTop: 8 }}>
+          {x.status === 'lunas' ? <span className="tag g">Lunas ✓</span>
+            : x.status === 'ditolak' ? <span className="tag" style={{ background: '#E5484D', color: '#fff' }}>Ditolak !</span>
+            : <span className="tag" style={{ background: '#FDE068' }}>Menunggu verifikasi …</span>}
+        </div>
+        <div style={{ marginTop: 10 }}><small>Nominal</small><b style={{ display: 'block' }}>{rp(x.nominal)}{x.metode ? ' · ' + x.metode : ''}</b></div>
+        {x.dikirim_at && <div style={{ marginTop: 10 }}><small>Dikirim</small><b style={{ display: 'block' }}>{tgl(x.dikirim_at)}</b></div>}
+        {x.diverifikasi_at && <div style={{ marginTop: 10 }}><small>{x.status === 'ditolak' ? 'Ditolak' : 'Disetujui'}</small><b style={{ display: 'block' }}>{tgl(x.diverifikasi_at)}</b></div>}
+        {x.catatan && <div style={{ marginTop: 10 }}><small>{x.status === 'ditolak' ? 'Alasan penolakan' : 'Catatan'}</small><b style={{ display: 'block' }}>{x.catatan}</b></div>}
+        <div style={{ marginTop: 12 }}>
+          <small>Foto bukti</small>
+          {!foto || foto.s === 'muat' ? <Memuat kecil />
+            : foto.s === 'ok' ? <img src={foto.url} alt="Bukti" style={{ width: '100%', borderRadius: 12, marginTop: 6 }} />
+            : foto.s === 'tanpa' ? <p className="mut">Tidak ada foto.</p>
+            : <p className="mut">Foto tidak bisa dimuat.</p>}
+        </div>
+        <button className="btn y s" style={{ marginTop: 14 }} onClick={onClose}>Tutup</button>
+      </div>
+    </div>
+  );
+}
+
 function Notifikasi({ me }) {
   const [items, setItems] = useState(null);
   const [dibacaAt, setDibacaAt] = useState(null);
+  const [detail, setDetail] = useState(null);
 
   useEffect(() => {
     const v = localStorage.getItem(STORAGE_KEY);
@@ -41,11 +83,10 @@ function Notifikasi({ me }) {
     (async () => {
       let notifs = [];
 
-      // Jika murni anggota (bukan bendahara dan bukan ketua) -> hanya milik sendiri
       if (me.role === 'anggota') {
         const { data } = await sb
           .from('iuran')
-          .select('id,bulan,status,catatan,diverifikasi_at,nominal')
+          .select('id,bulan,status,catatan,diverifikasi_at,dikirim_at,nominal,metode,bukti_path')
           .eq('anggota_id', me.id)
           .in('status', ['ditolak', 'lunas'])
           .order('diverifikasi_at', { ascending: false })
@@ -58,7 +99,7 @@ function Notifikasi({ me }) {
             judul:
               x.status === 'ditolak'
                 ? `Bukti ${lb(x.bulan)} ditolak`
-                : `Iuran ${lb(x.bulan)} lunas ✓`,
+                : `Iuran ${lb(x.bulan)} lunas`,
             sub:
               x.status === 'ditolak'
                 ? x.catatan
@@ -66,13 +107,13 @@ function Notifikasi({ me }) {
                   : 'Silakan kirim ulang bukti'
                 : rp(x.nominal) + ' tercatat masuk kas',
             waktu: x.diverifikasi_at,
+            detail: { ...x, nama: me.nama },
           });
         });
       } else {
-        // Ketua atau Bendahara -> lihat semua
         const { data } = await sb
           .from('iuran')
-          .select('id,bulan,status,catatan,diverifikasi_at,nominal,anggota_id')
+          .select('id,bulan,status,catatan,diverifikasi_at,dikirim_at,nominal,metode,bukti_path,anggota_id')
           .eq('anggota_id', me.id)
           .in('status', ['ditolak', 'lunas'])
           .order('diverifikasi_at', { ascending: false })
@@ -85,7 +126,7 @@ function Notifikasi({ me }) {
             judul:
               x.status === 'ditolak'
                 ? `Bukti ${lb(x.bulan)} ditolak`
-                : `Iuran ${lb(x.bulan)} lunas ✓`,
+                : `Iuran ${lb(x.bulan)} lunas`,
             sub:
               x.status === 'ditolak'
                 ? x.catatan
@@ -93,13 +134,13 @@ function Notifikasi({ me }) {
                   : 'Silakan kirim ulang bukti'
                 : rp(x.nominal) + ' tercatat masuk kas',
             waktu: x.diverifikasi_at,
+            detail: { ...x, nama: me.nama },
           });
         });
 
-        // Bukti menunggu verifikasi
         const { data: tunggu } = await sb
           .from('iuran')
-          .select('id,bulan,anggota_id,dikirim_at,nominal')
+          .select('id,bulan,anggota_id,dikirim_at,nominal,metode,bukti_path,status')
           .eq('status', 'menunggu_verifikasi')
           .order('dikirim_at', { ascending: false })
           .limit(20);
@@ -107,10 +148,7 @@ function Notifikasi({ me }) {
         const ids = [...new Set((tunggu || []).map((x) => x.anggota_id))];
         const namaMap = {};
         if (ids.length) {
-          const { data: pp } = await sb
-            .from('profiles')
-            .select('id,nama')
-            .in('id', ids);
+          const { data: pp } = await sb.from('profiles').select('id,nama').in('id', ids);
           (pp || []).forEach((p) => { namaMap[p.id] = p.nama; });
         }
 
@@ -121,14 +159,14 @@ function Notifikasi({ me }) {
             judul: `Bukti dari ${namaMap[x.anggota_id] || '?'}`,
             sub: `Iuran ${lb(x.bulan)} · ${rp(x.nominal)} — menunggu verifikasi`,
             waktu: x.dikirim_at,
+            detail: { ...x, nama: namaMap[x.anggota_id] || '?' },
           });
         });
 
-        // Iuran baru lunas (7 hari terakhir)
         const batas = new Date(Date.now() - 7 * 86400000).toISOString();
         const { data: baru } = await sb
           .from('iuran')
-          .select('id,bulan,anggota_id,diverifikasi_at,nominal')
+          .select('id,bulan,anggota_id,diverifikasi_at,dikirim_at,nominal,metode,bukti_path,status')
           .eq('status', 'lunas')
           .gte('diverifikasi_at', batas)
           .order('diverifikasi_at', { ascending: false })
@@ -137,10 +175,7 @@ function Notifikasi({ me }) {
         const ids2 = [...new Set((baru || []).map((x) => x.anggota_id))];
         const namaMap2 = {};
         if (ids2.length) {
-          const { data: pp2 } = await sb
-            .from('profiles')
-            .select('id,nama')
-            .in('id', ids2);
+          const { data: pp2 } = await sb.from('profiles').select('id,nama').in('id', ids2);
           (pp2 || []).forEach((p) => { namaMap2[p.id] = p.nama; });
         }
 
@@ -148,14 +183,14 @@ function Notifikasi({ me }) {
           notifs.push({
             id: 'l-' + x.id,
             tipe: 'lunas',
-            judul: `${namaMap2[x.anggota_id] || '?'} lunas ${lb(x.bulan)} ✓`,
+            judul: `${namaMap2[x.anggota_id] || '?'} lunas ${lb(x.bulan)}`,
             sub: rp(x.nominal) + ' masuk kas',
             waktu: x.diverifikasi_at,
+            detail: { ...x, nama: namaMap2[x.anggota_id] || '?' },
           });
         });
       }
 
-      // Urutkan dari yang TERBARU ke TERLAMA (Descending)
       notifs.sort((a, b) => new Date(b.waktu) - new Date(a.waktu));
       setItems(notifs);
 
@@ -170,7 +205,6 @@ function Notifikasi({ me }) {
   if (!items.length)
     return (
       <div style={{ textAlign: 'center', paddingTop: 40 }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>🔔</div>
         <p className="mut">Belum ada notifikasi.</p>
       </div>
     );
@@ -178,7 +212,7 @@ function Notifikasi({ me }) {
   return (
     <>
       <small style={{ display: 'block', marginBottom: 12 }}>
-        {items.length} notifikasi
+        {items.length} notifikasi · ketuk untuk lihat detail
       </small>
       {items.map((x) => {
         const baru = dibacaAt ? new Date(x.waktu) > dibacaAt : false;
@@ -194,9 +228,14 @@ function Notifikasi({ me }) {
           <div
             key={x.id}
             className="card"
+            role="button"
+            tabIndex={0}
+            onClick={() => setDetail(x.detail)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setDetail(x.detail); }}
             style={{
               background: bg,
               position: 'relative',
+              cursor: 'pointer',
             }}
           >
             {baru && (
@@ -218,22 +257,7 @@ function Notifikasi({ me }) {
               </span>
             )}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <span
-                style={{
-                  width: 38,
-                  height: 38,
-                  flexShrink: 0,
-                  border: '3px solid var(--ink)',
-                  borderRadius: '50%',
-                  background: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: 16,
-                  boxShadow: '2px 2px 0 var(--ink)',
-                }}
-              >
+              <span className="av s" style={{ background: '#fff', boxShadow: '2px 2px 0 var(--ink)' }}>
                 {ikon}
               </span>
               <div style={{ flex: 1 }}>
@@ -243,14 +267,7 @@ function Notifikasi({ me }) {
                     {x.sub}
                   </small>
                 )}
-                <small
-                  style={{
-                    display: 'block',
-                    marginTop: 6,
-                    opacity: 0.7,
-                    fontWeight: 700,
-                  }}
-                >
+                <small style={{ display: 'block', marginTop: 6, opacity: 0.7, fontWeight: 700 }}>
                   {waktuRelatif(x.waktu)} · {tgl(x.waktu)}
                 </small>
               </div>
@@ -258,6 +275,8 @@ function Notifikasi({ me }) {
           </div>
         );
       })}
+
+      <Detail x={detail} onClose={() => setDetail(null)} />
     </>
   );
 }

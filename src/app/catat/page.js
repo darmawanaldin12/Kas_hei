@@ -28,6 +28,12 @@ function Catat({ me }) {
   const [c, setC] = useState('');
   const [k, setK] = useState('');
   const [jk, setJk] = useState('');
+  const [met2, setMet2] = useState('transfer');
+  const [file2, setFile2] = useState(null);
+  const [fkey2, setFkey2] = useState(0);
+  const [aId2, setAId2] = useState('');
+  const [bulan2, setBulan2] = useState('');
+
   const [ver, setVer] = useState(0);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
@@ -93,16 +99,41 @@ function Catat({ me }) {
   async function simpanKeluar() {
     if (!(+jk > 0)) return setMsg('Isi jumlah pengeluaran');
     setBusy(true); setMsg('Menyimpan…');
-    const res = await sb.from('kas_transaksi').insert({ jenis: 'keluar', kategori_id: k || null, jumlah: +jk, keterangan: c || null });
+    let buktiPath = null;
+    if (file2) {
+      const foto = await siapkanFoto(file2);
+      const path = `keluar/${me.id}/${Date.now()}-${foto.name.replace(/[^\w.]/g, '_')}`;
+      const u = await sb.storage.from('bukti').upload(path, foto, { contentType: foto.type || undefined });
+      if (u.error) { setBusy(false); return setMsg(u.error.message); }
+      buktiPath = path;
+    }
+    const res = await sb.from('kas_transaksi').insert({
+      jenis: 'keluar',
+      kategori_id: k || null,
+      jumlah: +jk,
+      keterangan: c || null,
+      anggota_id: aId2 || null,
+      bulan: bulan2 ? bulan2 + '-01' : null,
+      metode: met2 || null,
+      bukti_path: buktiPath,
+    });
     setBusy(false);
     if (res.error) return setMsg(res.error.message);
     setMsg('');
+    const namaAng = ang.find((x) => x.id === aId2)?.nama;
     setSukses({
       judul: 'Pengeluaran tersimpan',
       sub: 'Sudah tercatat di kas',
-      rincian: [['Kategori', kat.find((x) => x.id === k)?.nama], ['Keterangan', c], ['Jumlah', rp(+jk), true]],
+      rincian: [
+        ['Kategori', kat.find((x) => x.id === k)?.nama],
+        namaAng ? ['Anggota', namaAng] : null,
+        bulan2 ? ['Bulan', nm(bulan2 + '-01')] : null,
+        ['Metode', met2],
+        ['Keterangan', c],
+        ['Jumlah', rp(+jk), true],
+      ].filter(Boolean),
     });
-    setJk(''); setC('');
+    setJk(''); setC(''); setAId2(''); setBulan2(''); setFile2(null); setFkey2((v) => v + 1);
   }
 
   if (!ready) return <Memuat />;
@@ -158,7 +189,18 @@ function Catat({ me }) {
         <>
           <label><small>Kategori</small>
             <select className="in" value={k} onChange={(e) => setK(e.target.value)}>{kat.map((x) => <option key={x.id} value={x.id}>{x.nama}</option>)}</select></label>
+          <label><small>Anggota (opsional)</small>
+            <select className="in" value={aId2} onChange={(e) => setAId2(e.target.value)}>
+              <option value="">— Tidak terkait anggota —</option>
+              {ang.map((x) => <option key={x.id} value={x.id}>{x.nama}</option>)}
+            </select></label>
+          <label><small>Bulan terkait (opsional)</small>
+            <input className="in" type="month" value={bulan2} onChange={(e) => setBulan2(e.target.value)} /></label>
           <label><small>Jumlah (Rp)</small><input className="in" type="number" inputMode="numeric" value={jk} onChange={(e) => setJk(e.target.value)} /></label>
+          <small>Metode</small>
+          <div className="seg">{['transfer', 'tunai'].map((m) => <button key={m} className={met2 === m ? 'on' : ''} onClick={() => setMet2(m)}>{m}</button>)}</div>
+          <label><small>Foto / nota bukti (opsional)</small>
+            <input key={fkey2} className="in" type="file" accept="image/*" onChange={(e) => setFile2(e.target.files?.[0] || null)} /></label>
           <label><small>Keterangan</small><input className="in" value={c} onChange={(e) => setC(e.target.value)} placeholder="Misal: beli kertas HVS" /></label>
           <div className="note">Setiap catatan menyimpan siapa yang input dan kapan. Tidak bisa dihapus diam-diam.</div>
           <button className="btn" disabled={busy} onClick={simpanKeluar}>Simpan pengeluaran</button>
