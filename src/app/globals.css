@@ -2,7 +2,11 @@
 *{box-sizing:border-box;margin:0}
 body{background:var(--bg);color:var(--ink);line-height:1.35}
 .app{max-width:430px;margin:0 auto;min-height:100vh;padding:0 16px 108px}
-header{display:flex;justify-content:space-between;align-items:center;padding:22px 0 14px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:22px 0 14px}
+header > div:first-child{min-width:0}
+.head-aksi{display:flex;align-items:center;gap:10px;flex:none}
+.av.bell{background:var(--sun);font-size:20px;position:relative;padding:0;line-height:1}
+.av.bell .dot{position:absolute;top:-3px;right:-3px;width:14px;height:14px;background:#E5484D;border:2px solid var(--ink);border-radius:50%;display:block}
 h1{font-size:34px;font-weight:800;line-height:1;letter-spacing:-1px;margin-top:6px}
 small{font-size:13px;font-weight:700}
 .h{display:block;margin:20px 0 10px;font-size:18px;font-weight:800}

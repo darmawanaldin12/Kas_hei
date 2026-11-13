@@ -83,15 +83,17 @@ export default function Shell({ title, only, children }) {
     <div className="app">
       <header>
         <div><span className="tag k">{me.role}</span><h1>{title}</h1></div>
-        <Link href="/pengaturan" className="av" title="Pengaturan" aria-label="Pengaturan akun" style={avatar ? { padding: 0, overflow: 'hidden' } : undefined}>
-          {avatar
-            ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
-            : me.nama[0]}
-        </Link>
-        <Link href="/notifikasi" className="av s" style={{ position: 'relative', background: 'var(--sun)', marginLeft: 10 }}>
-          🔔
-          {badge && <span style={{ position: 'absolute', top: -4, right: -4, width: 12, height: 12, background: '#E5484D', borderRadius: '50%', border: '2px solid #fff' }} />}
-        </Link>
+        <div className="head-aksi">
+          <Link href="/notifikasi" className="av bell" title="Notifikasi" aria-label="Notifikasi">
+            🔔
+            {badge && <i className="dot" />}
+          </Link>
+          <Link href="/pengaturan" className="av" title="Pengaturan" aria-label="Pengaturan akun" style={avatar ? { padding: 0, overflow: 'hidden' } : undefined}>
+            {avatar
+              ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+              : me.nama[0]}
+          </Link>
+        </div>
       </header>
       <main>{children(me)}</main>
       <nav>{nav.map(([h, i, l]) => <Link key={h} href={h} className={p === h ? 'on' : ''}>{ico(i)}{l}</Link>)}</nav>
