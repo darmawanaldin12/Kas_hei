@@ -41,8 +41,8 @@ function Notifikasi({ me }) {
     (async () => {
       let notifs = [];
 
-      if (me.role === 'anggota' || me.role === 'ketua') {
-        // Tampilkan iuran yg ditolak atau baru lunas milik sendiri
+      // Jika murni anggota (bukan bendahara dan bukan ketua) -> hanya milik sendiri
+      if (me.role === 'anggota') {
         const { data } = await sb
           .from('iuran')
           .select('id,bulan,status,catatan,diverifikasi_at,nominal')
@@ -68,9 +68,34 @@ function Notifikasi({ me }) {
             waktu: x.diverifikasi_at,
           });
         });
-      }
+      } else {
+        // Ketua atau Bendahara -> lihat semua
+        const { data } = await sb
+          .from('iuran')
+          .select('id,bulan,status,catatan,diverifikasi_at,nominal,anggota_id')
+          .eq('anggota_id', me.id)
+          .in('status', ['ditolak', 'lunas'])
+          .order('diverifikasi_at', { ascending: false })
+          .limit(30);
 
-      if (me.role === 'bendahara' || me.role === 'ketua') {
+        (data || []).forEach((x) => {
+          notifs.push({
+            id: x.id,
+            tipe: x.status === 'ditolak' ? 'tolak' : 'lunas',
+            judul:
+              x.status === 'ditolak'
+                ? `Bukti ${lb(x.bulan)} ditolak`
+                : `Iuran ${lb(x.bulan)} lunas ✓`,
+            sub:
+              x.status === 'ditolak'
+                ? x.catatan
+                  ? 'Alasan: ' + x.catatan
+                  : 'Silakan kirim ulang bukti'
+                : rp(x.nominal) + ' tercatat masuk kas',
+            waktu: x.diverifikasi_at,
+          });
+        });
+
         // Bukti menunggu verifikasi
         const { data: tunggu } = await sb
           .from('iuran')
@@ -130,11 +155,10 @@ function Notifikasi({ me }) {
         });
       }
 
-      // Urutkan berdasarkan waktu terbaru
+      // Urutkan dari yang TERBARU ke TERLAMA (Descending)
       notifs.sort((a, b) => new Date(b.waktu) - new Date(a.waktu));
       setItems(notifs);
 
-      // Tandai sudah dibaca
       const now = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, now);
       setDibacaAt(new Date(now));
@@ -172,7 +196,6 @@ function Notifikasi({ me }) {
             className="card"
             style={{
               background: bg,
-              borderWidth: baru ? 3 : 3,
               position: 'relative',
             }}
           >
