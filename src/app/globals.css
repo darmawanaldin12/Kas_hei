@@ -65,6 +65,21 @@ nav a svg{width:22px;height:22px}nav a.on{background:var(--sun);font-weight:800}
 .riwayat b{display:block;font-size:14px;font-weight:800}
 .riwayat small{display:block;font-size:11px;font-weight:700;opacity:.7;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .riwayat .nominal{flex:none;font-size:13px;font-weight:800}
+.tahun-nav{display:grid;grid-template-columns:44px 1fr 44px;gap:8px;margin:8px 0 10px}
+.tahun-nav .btn{--sh:3px;background:#fff;padding:8px;min-height:42px;box-shadow:3px 3px 0 var(--ink);font-size:15px}
+.tahun-nav .lbl{cursor:default;display:flex;align-items:center;justify-content:center;background:var(--sun)}
+.bulan-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.bulan-grid .tag{padding:7px 0;font-size:12px;text-align:center;background:#fff}
+.bulan-grid .tag.lunas{background:var(--mint)}
+.bulan-grid .tag.tunggu{background:var(--sun)}
+.bulan-grid .tag.pilih{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pilih-cepat{display:flex;gap:8px;margin-top:10px}
+.pilih-cepat button{flex:1;font-family:inherit;font-size:12px;font-weight:800;border:2px solid var(--ink);border-radius:999px;background:#fff;padding:9px;cursor:pointer;color:var(--ink);box-shadow:2px 2px 0 var(--ink)}
+.pilih-cepat button:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink)}
+.ringkas{display:flex;justify-content:space-between;align-items:center;border:3px solid var(--ink);border-radius:16px;background:var(--lilac);padding:12px 14px;margin:14px 0;box-shadow:3px 3px 0 var(--ink)}
+.ringkas small{display:block;font-size:11px;font-weight:800;opacity:.75}
+.ringkas b{font-size:16px;font-weight:800}
+.ringkas .kanan{text-align:right}
 .tekan{animation:tk .32s ease-out}
 .tekan-flat{animation:tkf .28s ease-out}
 @keyframes tk{35%{transform:translate(var(--sh,3px),var(--sh,3px));box-shadow:0 0 0 var(--ink)}70%{transform:translate(-1px,-1px)}}
