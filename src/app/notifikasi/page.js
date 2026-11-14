@@ -42,14 +42,14 @@ function Detail({ x, onClose }) {
 
   if (!x) return null;
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,43,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
       <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', margin: 0 }}>
         <b style={{ display: 'block', fontSize: 18 }}>{x.nama || '-'}</b>
         <small>Iuran {lb(x.bulan)} {x.bulan.slice(0, 4)}</small>
         <div style={{ marginTop: 8 }}>
           {x.status === 'lunas' ? <span className="tag g">Lunas ✓</span>
-            : x.status === 'ditolak' ? <span className="tag" style={{ background: '#E5484D', color: '#fff' }}>Ditolak !</span>
-            : <span className="tag" style={{ background: '#FDE068' }}>Menunggu verifikasi …</span>}
+            : x.status === 'ditolak' ? <span className="tag" style={{ background: 'var(--danger)', color: '#fff' }}>Ditolak !</span>
+            : <span className="tag" style={{ background: 'var(--warning)' }}>Menunggu verifikasi …</span>}
         </div>
         <div style={{ marginTop: 10 }}><small>Nominal</small><b style={{ display: 'block' }}>{rp(x.nominal)}{x.metode ? ' · ' + x.metode : ''}</b></div>
         {x.dikirim_at && <div style={{ marginTop: 10 }}><small>Dikirim</small><b style={{ display: 'block' }}>{tgl(x.dikirim_at)}</b></div>}
@@ -220,8 +220,8 @@ function Notifikasi({ me }) {
           x.tipe === 'tolak'
             ? 'var(--peach)'
             : x.tipe === 'tunggu'
-            ? '#FDE068'
-            : 'var(--mint)';
+            ? 'var(--warning)'
+            : 'var(--success)';
         const ikon =
           x.tipe === 'tolak' ? '✕' : x.tipe === 'tunggu' ? '…' : '✓';
         return (
@@ -244,7 +244,7 @@ function Notifikasi({ me }) {
                   position: 'absolute',
                   top: 10,
                   right: 12,
-                  background: '#E5484D',
+                  background: 'var(--danger)',
                   color: '#fff',
                   borderRadius: 999,
                   fontSize: 11,
@@ -257,7 +257,7 @@ function Notifikasi({ me }) {
               </span>
             )}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <span className="av s" style={{ background: '#fff', boxShadow: '2px 2px 0 var(--ink)' }}>
+              <span className="av s" style={{ background: 'var(--surface)', boxShadow: '2px 2px 0 var(--ink)' }}>
                 {ikon}
               </span>
               <div style={{ flex: 1 }}>

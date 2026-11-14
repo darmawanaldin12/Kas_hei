@@ -118,7 +118,7 @@ function Verifikasi({ me }) {
                   <span key={it.id} role="button" tabIndex={0} className="tag p"
                     onClick={() => setSel((s) => ({ ...s, [it.id]: !s[it.id] }))}
                     onKeyDown={(e) => { if (e.key === 'Enter') setSel((s) => ({ ...s, [it.id]: !s[it.id] })); }}
-                    style={{ cursor: 'pointer', ...(on ? { background: '#1a1a2e', color: '#fff' } : {}) }}>
+                    style={{ cursor: 'pointer', ...(on ? { background: 'var(--ink)', color: '#fff' } : {}) }}>
                     {on ? '☑' : '☐'} {nm(it.bulan)} · {rp(it.nominal)}
                   </span>
                 );

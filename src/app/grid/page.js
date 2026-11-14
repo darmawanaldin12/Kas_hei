@@ -65,8 +65,8 @@ function Grid() {
     });
   }
 
-  const kuning = { background: '#FDE068' };
-  const merah = { background: '#E5484D', color: '#fff' };
+  const kuning = { background: 'var(--warning)' };
+  const merah = { background: 'var(--danger)', color: '#fff' };
   const f = det && foto && foto.id === det.id ? foto : null;
 
   return (
@@ -129,7 +129,7 @@ function Grid() {
       })}
 
       {det && (
-        <div onClick={() => setDet(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,43,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
+        <div onClick={() => setDet(null)} style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
           <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', margin: 0 }}>
             <b style={{ display: 'block', fontSize: 18 }}>{det.nama}</b>
             <small>Iuran {lb(det.bulan)} {det.bulan.slice(0, 4)}</small>
@@ -162,7 +162,7 @@ function Grid() {
       )}
 
       {member && (
-        <div onClick={() => setMember(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,43,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
+        <div onClick={() => setMember(null)} style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
           <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', margin: 0 }}>
             <b style={{ display: 'block', fontSize: 18 }}>{member.nama}</b>
             <small>Rincian iuran {nm(ms[0])} — {nm(end)} {end.slice(0, 4)}</small>
@@ -171,11 +171,11 @@ function Grid() {
                 const lunas = b.status === 'lunas';
                 const ditolak = b.status === 'ditolak';
                 const tunggu = b.status === 'menunggu_verifikasi';
-                const bg = lunas ? 'var(--mint)' : ditolak ? '#E5484D' : tunggu ? '#FDE068' : 'var(--peach)';
+                const bg = lunas ? 'var(--success)' : ditolak ? 'var(--danger)' : tunggu ? 'var(--warning)' : 'var(--peach)';
                 const color = ditolak ? '#fff' : 'var(--ink)';
                 const label = lunas ? 'Lunas' : ditolak ? 'Ditolak' : tunggu ? 'Menunggu' : 'Belum';
                 return (
-                  <div key={b.bulan} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '2px solid #eee' }}>
+                  <div key={b.bulan} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '2px solid var(--divider)' }}>
                     <div>
                       <b style={{ display: 'block', fontSize: 15 }}>{b.label} {b.bulan.slice(0, 4)}</b>
                       {b.nominal && <small>{rp(b.nominal)}{b.metode ? ' · ' + b.metode : ''}</small>}

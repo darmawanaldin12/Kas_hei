@@ -5,7 +5,7 @@ import Shell from '../../components/Shell';
 import { sb } from '../../lib/supabase';
 import { siapkanAvatar } from '../../lib/foto';
 
-const kunci = { background: '#e8e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' };
+const kunci = { background: 'var(--locked)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' };
 
 function Pengaturan({ me }) {
   const r = useRouter();

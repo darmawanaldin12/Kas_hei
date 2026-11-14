@@ -12,7 +12,7 @@ function Catat({ me }) {
   const b = ym();
   const ms = Array.from({ length: 12 }, (_, i) => addM(b, i - 8));
   const nm = (m) => lb(m) + (m.slice(0, 4) !== b.slice(0, 4) ? " '" + m.slice(2, 4) : '');
-  const kuning = { background: '#FDE068' };
+  const kuning = { background: 'var(--warning)' };
 
   const [mode, setMode] = useState('iuran');
   const [ready, setReady] = useState(false);
@@ -167,7 +167,7 @@ function Catat({ me }) {
               const on = pilih.includes(m);
               return (
                 <span key={m} role="button" tabIndex={0} onClick={() => toggle(m)} onKeyDown={(e) => { if (e.key === 'Enter') toggle(m); }}
-                  className="tag p" style={{ textAlign: 'center', cursor: 'pointer', ...(on ? { background: '#1a1a2e', color: '#fff' } : {}) }}>
+                  className="tag p" style={{ textAlign: 'center', cursor: 'pointer', ...(on ? { background: 'var(--ink)', color: '#fff' } : {}) }}>
                   {on ? '☑' : '☐'} {nm(m)}
                 </span>
               );

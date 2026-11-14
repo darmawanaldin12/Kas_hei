@@ -10,7 +10,7 @@ const CSS = `
 .sk-d{position:absolute;width:16px;height:16px;border:3px solid var(--ink);border-radius:5px;animation:sk-pop .5s cubic-bezier(.2,1.6,.4,1) both}
 .sk h2{font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1;margin:0 0 8px}
 .sk-sub{font-weight:700;font-size:14px;margin:0 0 22px}
-.sk-t{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:5px 5px 0 var(--ink);padding:4px 16px;text-align:left;margin-bottom:22px;animation:sk-up .4s .2s ease-out both}
+.sk-t{background:var(--surface);border:3px solid var(--ink);border-radius:20px;box-shadow:5px 5px 0 var(--ink);padding:4px 16px;text-align:left;margin-bottom:22px;animation:sk-up .4s .2s ease-out both}
 .sk-r{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:11px 0;border-bottom:2px dashed var(--ink)}
 .sk-r:last-child{border-bottom:0}
 .sk-r small{flex:none}
@@ -36,12 +36,12 @@ export default function Sukses({ judul, sub, rincian = [], tombol = [], tipe = '
       <style>{CSS}</style>
       <div className="sk-in">
         <div className="sk-ic">
-          <span className="sk-d" style={{ top: -8, right: -14, background: '#FFE066', animationDelay: '.45s' }} />
-          <span className="sk-d" style={{ bottom: 6, left: -18, background: '#FFB48A', animationDelay: '.55s' }} />
-          <span className="sk-d" style={{ top: 18, left: -22, background: '#C9B8FF', animationDelay: '.65s', width: 12, height: 12 }} />
-          <span className="sk-d" style={{ bottom: -6, right: -8, background: '#fff', animationDelay: '.6s', width: 12, height: 12 }} />
-          <div className="sk-c" style={{ background: ok ? '#7DF0C0' : '#FFB48A' }}>
-            <svg viewBox="0 0 56 56" fill="none" stroke="#1A1A2E" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <span className="sk-d" style={{ top: -8, right: -14, background: 'var(--warning)', animationDelay: '.45s' }} />
+          <span className="sk-d" style={{ bottom: 6, left: -18, background: 'var(--peach)', animationDelay: '.55s' }} />
+          <span className="sk-d" style={{ top: 18, left: -22, background: 'var(--info)', animationDelay: '.65s', width: 12, height: 12 }} />
+          <span className="sk-d" style={{ bottom: -6, right: -8, background: 'var(--surface)', animationDelay: '.6s', width: 12, height: 12 }} />
+          <div className="sk-c" style={{ background: ok ? 'var(--success)' : 'var(--peach)' }}>
+            <svg viewBox="0 0 56 56" fill="none" stroke="var(--ink)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               {ok ? <path d="M12 29l11 11 21-23" /> : <><path d="M16 16l24 24" /><path d="M40 16L16 40" /></>}
             </svg>
           </div>
