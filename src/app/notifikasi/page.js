@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
+import Modal from '../../components/Modal';
 import { sb, lb, rp } from '../../lib/supabase';
 import { fotoUrl } from '../../lib/foto';
 
@@ -42,10 +43,8 @@ function Detail({ x, onClose }) {
 
   if (!x) return null;
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
-      <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', margin: 0 }}>
-        <b style={{ display: 'block', fontSize: 18 }}>{x.nama || '-'}</b>
-        <small>Iuran {lb(x.bulan)} {x.bulan.slice(0, 4)}</small>
+    <Modal judul={x.nama || '-'} onTutup={onClose}>
+      <small>Iuran {lb(x.bulan)} {x.bulan.slice(0, 4)}</small>
         <div style={{ marginTop: 8 }}>
           {x.status === 'lunas' ? <span className="tag g">Lunas ✓</span>
             : x.status === 'ditolak' ? <span className="tag" style={{ background: 'var(--danger)', color: '#fff' }}>Ditolak !</span>
@@ -62,9 +61,8 @@ function Detail({ x, onClose }) {
             : foto.s === 'tanpa' ? <p className="mut">Tidak ada foto.</p>
             : <p className="mut">Foto tidak bisa dimuat.</p>}
         </div>
-        <button className="btn y s" style={{ marginTop: 14 }} onClick={onClose}>Tutup</button>
-      </div>
-    </div>
+      <button className="btn y s" style={{ marginTop: 14 }} onClick={onClose}>Tutup</button>
+    </Modal>
   );
 }
 

@@ -98,6 +98,15 @@ nav a svg{width:1.8em;height:1.8em}nav a.on{background:var(--warning);font-weigh
 .ringkas .kanan{text-align:right}
 .tekan{animation:tk .32s ease-out}
 .tekan-flat{animation:tkf .28s ease-out}
+.modal-latar{position:fixed;inset:0;background:var(--overlay);z-index:50}
+.modal-latar[data-state=open]{animation:modal-latar-masuk .18s ease-out}
+.modal-isi{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-height:85vh;overflow-y:auto;margin:0;z-index:51;animation:modal-isi-masuk .22s cubic-bezier(.2,1.4,.4,1)}
+.modal-isi:focus{outline:none}
+.modal-judul{display:block;font-size:18px;font-weight:800;line-height:1.25;padding-right:34px}
+.modal-x{position:absolute;top:10px;right:12px;width:34px;height:34px;border:2px solid var(--ink);border-radius:50%;background:var(--surface);color:var(--ink);font-family:inherit;font-size:16px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.modal-x:active{transform:translate(1px,1px)}
+@keyframes modal-latar-masuk{from{opacity:0}}
+@keyframes modal-isi-masuk{from{opacity:0;transform:translate(-50%,-48%) scale(.97)}}
 @keyframes tk{35%{transform:translate(var(--sh,3px),var(--sh,3px));box-shadow:0 0 0 var(--ink)}70%{transform:translate(-1px,-1px)}}
 @keyframes tkf{35%{transform:scale(.9)}70%{transform:scale(1.05)}}
-@media (prefers-reduced-motion:reduce){.tekan,.tekan-flat{animation:none}}
+@media (prefers-reduced-motion:reduce){.tekan,.tekan-flat{animation:none}.modal-latar,.modal-isi{animation:none}}

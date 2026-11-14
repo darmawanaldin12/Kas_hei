@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
+import Modal from '../../components/Modal';
 import { sb, rp, ym, addM, lb } from '../../lib/supabase';
 import { fotoUrl } from '../../lib/foto';
 
@@ -129,10 +130,8 @@ function Grid() {
       })}
 
       {det && (
-        <div onClick={() => setDet(null)} style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
-          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', margin: 0 }}>
-            <b style={{ display: 'block', fontSize: 18 }}>{det.nama}</b>
-            <small>Iuran {lb(det.bulan)} {det.bulan.slice(0, 4)}</small>
+        <Modal judul={det.nama} onTutup={() => setDet(null)}>
+          <small>Iuran {lb(det.bulan)} {det.bulan.slice(0, 4)}</small>
             <div style={{ marginTop: 8 }}>
               {det.status === 'lunas' ? <span className="tag g">Lunas ✓</span>
                 : det.status === 'ditolak' ? <span className="tag" style={merah}>Ditolak !</span>
@@ -156,16 +155,13 @@ function Grid() {
                 : f.s === 'tanpa' ? <p className="mut">Tidak ada foto (dicatat langsung oleh bendahara).</p>
                 : <p className="mut">Foto bukti hanya bisa dilihat bendahara, ketua, dan pemilik iuran.</p>}
             </div>
-            <button className="btn y s" style={{ marginTop: 14 }} onClick={() => setDet(null)}>Tutup</button>
-          </div>
-        </div>
+          <button className="btn y s" style={{ marginTop: 14 }} onClick={() => setDet(null)}>Tutup</button>
+        </Modal>
       )}
 
       {member && (
-        <div onClick={() => setMember(null)} style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
-          <div className="card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', margin: 0 }}>
-            <b style={{ display: 'block', fontSize: 18 }}>{member.nama}</b>
-            <small>Rincian iuran {nm(ms[0])} — {nm(end)} {end.slice(0, 4)}</small>
+        <Modal judul={member.nama} onTutup={() => setMember(null)}>
+          <small>Rincian iuran {nm(ms[0])} — {nm(end)} {end.slice(0, 4)}</small>
             <div style={{ marginTop: 14 }}>
               {member.bulan.map((b) => {
                 const lunas = b.status === 'lunas';
@@ -191,8 +187,7 @@ function Grid() {
               </small>
               <button className="btn y s" onClick={() => setMember(null)}>Tutup</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   );
