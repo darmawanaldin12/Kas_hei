@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
 import Sukses from '../../components/Sukses';
+import Ikon from '../../components/Ikon';
 import { sb, rp, ym, lb } from '../../lib/supabase';
 import { siapkanFoto } from '../../lib/foto';
 
@@ -140,12 +141,12 @@ function Bukti({ me }) {
               onKeyDown={(e) => { if (e.key === 'Enter') toggle(m); }}
               className={'tag' + (on ? ' pilih' : '')}
               style={{ cursor: 'pointer' }}>
-              {on ? '☑' : '☐'} {nm(m)}
+              {on ? <Ikon name="kotak-centang" tebal={3} /> : <Ikon name="kotak" tebal={3} />} {nm(m)}
             </span>
           );
         })}
       </div>
-      <small style={{ display: 'block', marginTop: 6 }}>✓ lunas · … menunggu verifikasi · ☐ belum, bisa dipilih</small>
+      <small style={{ display: 'block', marginTop: 6 }}><Ikon name="centang" /> lunas · … menunggu verifikasi · <Ikon name="kotak" /> belum, bisa dipilih</small>
 
       <div className="pilih-cepat">
         <button onClick={pilihSemua}>Pilih semua belum lunas</button>

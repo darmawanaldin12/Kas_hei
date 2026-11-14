@@ -19,12 +19,15 @@ header{display:flex;justify-content:space-between;align-items:center;gap:12px;pa
 header > div:first-child{min-width:0}
 .head-aksi{display:flex;align-items:center;gap:10px;flex:none}
 .av.bell{background:var(--warning);font-size:20px;position:relative;padding:0;line-height:1}
+.av.bell svg{width:1.1em;height:1.1em}
 .av.bell .dot{position:absolute;top:-3px;right:-3px;width:14px;height:14px;background:var(--danger);border:2px solid var(--ink);border-radius:50%;display:block}
 h1{font-size:34px;font-weight:800;line-height:1;letter-spacing:-1px;margin-top:6px}
 small{font-size:13px;font-weight:700}
 .h{display:block;margin:20px 0 10px;font-size:18px;font-weight:800}
 .mut{padding:24px 0;font-weight:700}
 .tag{display:inline-block;font-size:12px;font-weight:800;border:2px solid var(--border);border-radius:999px;padding:2px 10px;background:var(--surface)}
+.tag svg{width:1.05em;height:1.05em;vertical-align:-.12em}
+small svg{width:1em;height:1em;vertical-align:-.12em}
 .tag.k{background:var(--ink);color:#fff}.tag.y{background:var(--warning)}.tag.g{background:var(--success)}.tag.p{background:var(--peach)}
 .card{border:3px solid var(--border);border-radius:20px;box-shadow:5px 5px 0 var(--ink);background:var(--surface);padding:14px 16px;margin-bottom:14px}
 .card.hero{background:var(--success);border-radius:24px;box-shadow:6px 6px 0 var(--ink)}
@@ -48,7 +51,7 @@ label small{display:block;margin-top:4px}
 .nav-m{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;margin-bottom:12px}.nav-m .btn{--sh:3px;padding:10px;min-height:48px;box-shadow:3px 3px 0 var(--ink)}
 nav{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:398px;display:flex;gap:4px;padding:6px;border:3px solid var(--border);border-radius:30px;background:var(--surface);box-shadow:4px 4px 0 var(--ink);z-index:10}
 nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;border-radius:24px;font-size:12px;font-weight:700;color:var(--ink);text-decoration:none}
-nav a svg{width:22px;height:22px}nav a.on{background:var(--warning);font-weight:800}
+nav a svg{width:1.8em;height:1.8em}nav a.on{background:var(--warning);font-weight:800}
 .login{max-width:430px;margin:0 auto;min-height:100vh;padding:56px 22px}
 .login-top{position:relative;margin-bottom:26px}
 .logo{width:76px;height:76px;border:3px solid var(--ink);border-radius:50%;background:var(--warning);box-shadow:5px 5px 0 var(--ink);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;transform:rotate(-8deg);margin-bottom:14px}

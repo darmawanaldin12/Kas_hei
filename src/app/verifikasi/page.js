@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
 import Sukses from '../../components/Sukses';
+import Ikon from '../../components/Ikon';
 import { sb, rp, ym, lb } from '../../lib/supabase';
 import { fotoUrl } from '../../lib/foto';
 
@@ -119,7 +120,7 @@ function Verifikasi({ me }) {
                     onClick={() => setSel((s) => ({ ...s, [it.id]: !s[it.id] }))}
                     onKeyDown={(e) => { if (e.key === 'Enter') setSel((s) => ({ ...s, [it.id]: !s[it.id] })); }}
                     style={{ cursor: 'pointer', ...(on ? { background: 'var(--ink)', color: '#fff' } : {}) }}>
-                    {on ? '☑' : '☐'} {nm(it.bulan)} · {rp(it.nominal)}
+                    {on ? <Ikon name="kotak-centang" tebal={3} /> : <Ikon name="kotak" tebal={3} />} {nm(it.bulan)} · {rp(it.nominal)}
                   </span>
                 );
               })}

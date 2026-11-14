@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Shell from '../../components/Shell';
 import Memuat from '../../components/Memuat';
 import Sukses from '../../components/Sukses';
+import Ikon from '../../components/Ikon';
 import { sb, rp, ym, addM, lb } from '../../lib/supabase';
 import { siapkanFoto } from '../../lib/foto';
 
@@ -168,12 +169,12 @@ function Catat({ me }) {
               return (
                 <span key={m} role="button" tabIndex={0} onClick={() => toggle(m)} onKeyDown={(e) => { if (e.key === 'Enter') toggle(m); }}
                   className="tag p" style={{ textAlign: 'center', cursor: 'pointer', ...(on ? { background: 'var(--ink)', color: '#fff' } : {}) }}>
-                  {on ? '☑' : '☐'} {nm(m)}
+                  {on ? <Ikon name="kotak-centang" tebal={3} /> : <Ikon name="kotak" tebal={3} />} {nm(m)}
                 </span>
               );
             })}
           </div>
-          <small style={{ display: 'block', marginBottom: 12 }}>✓ lunas · … menunggu verifikasi (setujui di menu Verifikasi) · ☐ belum, bisa dipilih</small>
+          <small style={{ display: 'block', marginBottom: 12 }}><Ikon name="centang" /> lunas · … menunggu verifikasi (setujui di menu Verifikasi) · <Ikon name="kotak" /> belum, bisa dipilih</small>
           <label><small>Jumlah (otomatis dari bulan yang dipilih)</small>
             <input className="in" readOnly placeholder="Rp 0" value={pilih.length ? rp(nom * pilih.length) : ''} /></label>
           <small style={{ display: 'block', marginBottom: 12 }}>{pilih.length ? pilih.length + ' bulan × ' + rp(nom) + ': ' + [...pilih].sort().map(nm).join(', ') : rp(nom) + ' per bulan'}</small>

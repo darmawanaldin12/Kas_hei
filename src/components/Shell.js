@@ -4,21 +4,9 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { sb } from '../lib/supabase';
 import Memuat from './Memuat';
+import Ikon from './Ikon';
 
 const STORAGE_KEY = 'notif_dibaca_at';
-
-const IKON = {
-  home: 'M3 11 12 3l9 8M5 10v10h14V10',
-  grid: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
-  plus: 'M12 4v16M4 12h16',
-  list: 'M5 3h14v18H5zM9 8h6M9 12h6M9 16h4',
-  users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M17 4a4 4 0 0 1 0 7M22 21v-2a5 5 0 0 0-4-4.9',
-  up: 'M12 16V4M7 9l5-5 5 5M4 20h16',
-  ok: 'M5 12l5 5L20 7',
-};
-const ico = (k) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={IKON[k]} /></svg>
-);
 
 export default function Shell({ title, only, children }) {
   const r = useRouter();
@@ -85,7 +73,7 @@ export default function Shell({ title, only, children }) {
         <div><span className="tag k">{me.role}</span><h1>{title}</h1></div>
         <div className="head-aksi">
           <Link href="/notifikasi" className="av bell" title="Notifikasi" aria-label="Notifikasi">
-            🔔
+            <Ikon name="bell" />
             {badge && <i className="dot" />}
           </Link>
           <Link href="/pengaturan" className="av" title="Pengaturan" aria-label="Pengaturan akun" style={avatar ? { padding: 0, overflow: 'hidden' } : undefined}>
@@ -96,7 +84,7 @@ export default function Shell({ title, only, children }) {
         </div>
       </header>
       <main>{children(me)}</main>
-      <nav>{nav.map(([h, i, l]) => <Link key={h} href={h} className={p === h ? 'on' : ''}>{ico(i)}{l}</Link>)}</nav>
+      <nav>{nav.map(([h, i, l]) => <Link key={h} href={h} className={p === h ? 'on' : ''}><Ikon name={i} />{l}</Link>)}</nav>
     </div>
   );
 }
